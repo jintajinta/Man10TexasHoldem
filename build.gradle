@@ -58,6 +58,7 @@ sourceSets {
 }
 
 processResources {
+    filteringCharset = 'UTF-8'
     filesMatching('plugin.yml') {
         expand version: project.version
     }

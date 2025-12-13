@@ -441,7 +441,8 @@ open class TexasHoldem:Thread{
 
     protected fun removeItem(slot: Int){
         for(playerData in playerList){
-            playerData.playerGUI.inv.setItem(slot, ItemStack(Material.STONE, 0))
+            // 空にするには null をセットするのが正しい（ItemStack(amount=0) は IllegalArgumentException を投げる）
+            playerData.playerGUI.inv.setItem(slot, null)
         }
     }
 

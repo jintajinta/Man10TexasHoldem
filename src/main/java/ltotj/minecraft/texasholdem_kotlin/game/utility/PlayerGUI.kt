@@ -13,7 +13,8 @@ class PlayerGUI(private val seat: Int,name: String){
     val inv= Bukkit.createInventory(null, 54, Component.text(name))
 
     private fun createGUIItem(material: Material, amount: Int, name: String, lore: List<String>):ItemStack{
-        val item=ItemStack(material, amount)
+        val safeAmount = if (amount <= 0) 1 else amount
+        val item=ItemStack(material, safeAmount)
         val meta=item.itemMeta
         meta.displayName(Component.text(name))
         meta.lore(listToComponent(lore))
@@ -22,7 +23,8 @@ class PlayerGUI(private val seat: Int,name: String){
     }
 
     private fun createGUIItem(material: Material, amount: Int, name: String):ItemStack{
-        val item=ItemStack(material, amount)
+        val safeAmount = if (amount <= 0) 1 else amount
+        val item=ItemStack(material, safeAmount)
         val meta=item.itemMeta
         meta.displayName(Component.text(name))
         item.itemMeta = meta

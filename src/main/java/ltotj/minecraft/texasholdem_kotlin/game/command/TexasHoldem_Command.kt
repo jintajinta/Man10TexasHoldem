@@ -193,7 +193,7 @@ object TexasHoldem_Command: CommandExecutor, TabCompleter {
                 else if (Main.vault.getBalance(sender.uniqueId) < Main.texasHoldemTables[Bukkit.getPlayerUniqueId(args[1])]!!.rate * Main.texasHoldemTables[Bukkit.getPlayerUniqueId(args[1])]!!.firstChips) sender.sendMessage("所持金が足りません")
 
                 //歪すぎ
-                else if (!Main.texasHoldemTables[Bukkit.getPlayerUniqueId(args[1])]!!.isRunning&&Main.texasHoldemTables[Bukkit.getPlayerUniqueId(args[1])]!!.roundTimes>20&& !preJoinPlayersToManyRoundTimes.contains(sender.uniqueId)){
+                else if (!Main.texasHoldemTables[Bukkit.getPlayerUniqueId(args[1])]!!.isRunning&&Main.texasHoldemTables[Bukkit.getPlayerUniqueId(args[1])]!!.roundTimes>20&& !preJoinPlayersToManyRoundTimes.any { it.key.second == sender.uniqueId }){
 
                     preJoinPlayersToManyRoundTimes.filter { it.key.second==sender.uniqueId }.keys.forEach {
                         preJoinPlayersToManyRoundTimes.remove(it)

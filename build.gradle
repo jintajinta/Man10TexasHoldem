@@ -1,75 +1,97 @@
-apply plugin: 'kotlin'
+plugins {
+    id 'java'
+    id 'org.jetbrains.kotlin.jvm' version '1.9.22'
+}
 
 group = 'ltotj.minecraft'
 version = '1.0-SNAPSHOT'
-
-sourceCompatibility = '1.8'
-targetCompatibility = '1.8'
-
-configurations {
-    embed
-    compile.extendsFrom(embed)
-}
 
 repositories {
     mavenCentral()
     mavenLocal()
     maven {
-        name = 'papermc'
-        url = 'https://papermc.io/repo/repository/maven-public/'
+        name = 'papermc-repo'
+        url = 'https://repo.papermc.io/repository/maven-public/'
     }
     maven {
         name = 'sonatype'
         url = 'https://oss.sonatype.org/content/groups/public/'
     }
+    maven { url 'https://jitpack.io' }
 }
 
 dependencies {
-    compileOnly 'io.papermc.paper:paper-api:1.20.4-R0.1-SNAPSHOT'
-    compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    compileOnly 'io.papermc.paper:paper-api:1.21-R0.1-SNAPSHOT'
+    compileOnly("com.github.MilkBowl:VaultAPI:1.7") {
+        exclude group: 'org.bukkit', module: 'bukkit'
+    }
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.9.22'
 }
 
-import org.apache.tools.ant.filters.ReplaceTokens
+configurations {
+    implementation {
+        exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-common'
+        exclude group: 'org.jetbrains', module: 'annotations'
+    }
+}
+
+def targetJavaVersion = 21
+java {
+    def javaVersion = JavaVersion.toVersion(targetJavaVersion)
+    sourceCompatibility = javaVersion
+    targetCompatibility = javaVersion
+    if (JavaVersion.current() < javaVersion) {
+        toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
+        options.release = targetJavaVersion
+    }
+}
+
+
 sourceSets {
     main.java.srcDirs += 'src/main/kotlin'
     main.java.srcDirs += 'src/main/java'
 }
+
 processResources {
-    from(sourceSets.main.resources.srcDirs) {
-        filter ReplaceTokens, tokens: [version: version]
+    filesMatching('plugin.yml') {
+        expand version: project.version
     }
 }
-buildscript {
-    ext{
-        kotlin_version = '1.4.31'
-        spigot_version = '1.17-R0.1-SNAPSHOT'
+
+compileKotlin {
+    kotlinOptions {
+        jvmTarget = "21"
     }
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+}
+
+compileTestKotlin {
+    kotlinOptions {
+        jvmTarget = "21"
     }
 }
 
 jar {
     from {
-        configurations.compile.collect {
+        configurations.runtimeClasspath.findAll {
+            it.name.contains('kotlin-stdlib')
+        }.collect {
             it.isDirectory() ? it : zipTree(it)
         }
     }
-}
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    archiveFileName = "${project.name}-${project.version}.jar"
+    destinationDirectory = file("$buildDir/libs")
 
-tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
-    kotlinOptions {
-        jvmTarget = "1.8"
+    manifest {
+        attributes(
+            'Implementation-Title': project.name,
+            'Implementation-Version': project.version
+        )
     }
-}
-
-repositories {
-    maven { url 'https://jitpack.io' }
-}
-dependencies {
-    compileOnly "com.github.MilkBowl:VaultAPI:1.7"
 }
 

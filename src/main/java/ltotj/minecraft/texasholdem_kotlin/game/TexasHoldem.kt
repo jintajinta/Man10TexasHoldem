@@ -160,6 +160,7 @@ open class TexasHoldem:Thread{
         fun setRaiseMenu(){
             addedChips=lastRaise
             playerGUI.setRaiseButton(lastRaise)
+            playerGUI.reloadRaiseButton(bet + addedChips, lastRaise)
         }
 
         fun drawCard(){
@@ -175,14 +176,14 @@ open class TexasHoldem:Thread{
         fun raiseBet(){
             if(bet+addedChips-instBet<playerChips) {
                 addedChips++
-                playerGUI.reloadRaiseButton(addedChips,lastRaise)
+                playerGUI.reloadRaiseButton(bet + addedChips,lastRaise)
             }
         }
 
         fun downBet(){
             if(addedChips>lastRaise){
                 addedChips--
-                playerGUI.reloadRaiseButton(addedChips,lastRaise)
+                playerGUI.reloadRaiseButton(bet + addedChips,lastRaise)
             }
         }
 

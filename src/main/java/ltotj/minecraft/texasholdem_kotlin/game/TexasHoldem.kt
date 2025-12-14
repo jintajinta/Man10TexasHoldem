@@ -873,7 +873,7 @@ open class TexasHoldem:Thread{
 
             showAndPayReward((firstSeat+bbDifCount-1)%seatSize)
 
-            sleep(4000)
+            sleep(1000)
             for(i in 0 until seatSize){
                 removeItem(cardPosition(i))
                 removeItem(cardPosition(i) + 1)

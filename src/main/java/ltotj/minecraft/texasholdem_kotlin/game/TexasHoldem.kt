@@ -643,6 +643,7 @@ open class TexasHoldem:Thread{
 
     protected fun showAndPayReward(bb:Int){
         val handsList=ArrayList<ArrayList<Int>>()
+        val totalPotForAnimation = pot
         for (i in 0 until playerList.size) {
             if (!foldedList.contains(i)) {//displayHand実行によりhandが保存される
                 if(foldedList.size!=playerList.size-1) {
@@ -673,15 +674,21 @@ open class TexasHoldem:Thread{
                 }
             }
         }
-        //表示
-        if (handsList[0].size==1) {
-            for (i in 0..7) {
-                setWinnerHead(i % 2 == 0, playerList[handsList[0][0]].getHead())
-                playSoundAlPl(Sound.ENTITY_FIREWORK_ROCKET_TWINKLE_FAR,1F)
-                sleep(500)
+        // 表示 (勝者が一人だけなら、配当アニメの前に頭アニメを先に再生する)
+        if (handsList.isNotEmpty() && handsList[0].size == 1) {
+            val singleWinnerSeat = handsList[0][0]
+            // ポットの合計に応じてアニメを再生（閾値未満なら何もしない）
+            val chipsPerBB = 2 // 2 枚を 1 BB と見なす
+            val threshold = 20 * chipsPerBB
+            if (totalPotForAnimation >= threshold) {
+                for (i in 0..7) {
+                    setWinnerHead(i % 2 == 0, playerList[singleWinnerSeat].getHead())
+                    playSoundAlPl(Sound.ENTITY_FIREWORK_ROCKET_TWINKLE_FAR,1F)
+                    sleep(300)
+                }
             }
-        }
-        else {
+        } else {
+            // 引き分け
             setDrawItem()
             sleep(1500)
         }

@@ -44,10 +44,20 @@ object TexasHoldem_Event :Listener{
                 }
                 "raise"->{
                     when(slot){
-                        45-> return if(item.type==Material.BARRIER) slot else 0
-                        46-> return if(item.type==Material.RED_WOOL) slot else 0
-                        49-> return if(item.type==Material.GOLD_NUGGET) slot else 0
-                        52-> return if(item.type==Material.BLUE_WOOL) slot else 0
+                        50-> return if(item.type==Material.BARRIER) slot else 0
+                        51-> return if(item.type==Material.RED_WOOL) slot else 0
+                        52-> return if(item.type==Material.GOLD_NUGGET) slot else 0
+                        53-> return if(item.type==Material.BLUE_WOOL) slot else 0
+                        // ショートカットボタン
+                        45,46,47,48-> {
+                            if(item.type==Material.LIGHT_BLUE_STAINED_GLASS_PANE || 
+                               item.type==Material.LIME_STAINED_GLASS_PANE ||
+                               item.type==Material.ORANGE_STAINED_GLASS_PANE ||
+                               item.type==Material.MAGENTA_STAINED_GLASS_PANE) {
+                                return slot
+                            }
+                            return 0
+                        }
                     }
                 }
             }
@@ -81,13 +91,35 @@ object TexasHoldem_Event :Listener{
                         53 -> playerData.allIn()
                     }
                     when (matchItem(item, e.slot, "raise")) {
-                        45 -> {
+                        50 -> {
                             playerData.setActionButtons()
                             playerData.addedChips = 0
                         }
-                        46 -> playerData.downBet()
-                        49 -> playerData.preCall.set(true)
-                        52 -> playerData.raiseBet()
+                        51 -> playerData.downBet()
+                        52 -> playerData.preCall.set(true)
+                        53 -> playerData.raiseBet()
+                        45,46,47,48 -> {
+                            // ショートカットボタン: アイテムのloreから目標ベット額を取得
+                            val meta = item.itemMeta
+                            val lore = meta?.lore()
+                            if (lore != null && lore.isNotEmpty()) {
+                                val firstLore = (lore[0] as Component).toString()
+                                // "§e123枚" または "§e§lオールイン" の形式から数値を抽出
+                                if (firstLore.contains("オールイン")) {
+                                    // オールインの場合は全額
+                                    playerData.addedChips = playerData.playerChips + playerData.instBet - table.bet
+                                } else {
+                                    val betMatch = Regex("""§e(\d+)枚""").find(firstLore)
+                                    if (betMatch != null) {
+                                        val targetBet = betMatch.groupValues[1].toInt()
+                                        val needAdd = targetBet - table.bet
+                                        playerData.addedChips = if (needAdd > 0) needAdd else 0
+                                    }
+                                }
+                                // GUI更新（決定はしない）
+                                playerData.playerGUI.reloadRaiseButton(table.bet + playerData.addedChips, table.lastRaise)
+                            }
+                        }
                     }
                 }
 

@@ -128,14 +128,80 @@ class PlayerGUI(private val seat: Int,name: String){
         }
     }
 
-    fun setRaiseButton(minBet: Int){
+    fun setRaiseButton(minBet: Int, isPreFlop: Boolean, pot: Int, currentBet: Int, bbAmount: Int, playerChips: Int, instBet: Int){
         for(i in 45..53){
             setGUIItem(i, Material.WHITE_STAINED_GLASS_PANE,"")
         }
-        setGUIItem(45,Material.BARRIER,"§4§l戻る")
-        setGUIItem(46,Material.RED_WOOL,"§c§l賭けチップを一枚減らす")
-        reloadRaiseButton(minBet,minBet)
-        setGUIItem(52,Material.BLUE_WOOL,"§9§l賭けチップを一枚増やす")
+        
+        // 右側にメイン操作ボタン配置（50-53）
+        setGUIItem(49,Material.WHITE_STAINED_GLASS_PANE,"")
+        setGUIItem(50,Material.BARRIER,"§4§l戻る")
+        setGUIItem(51,Material.RED_WOOL,"§c§l賭けチップを一枚減らす")
+        setGUIItem(52,Material.GOLD_NUGGET,minBet , "§a§l以下の枚数でチップを上乗せする", listOf("§c" + minBet + "枚追加","§d最小上乗せ枚数は§e${minBet}枚§dです"))
+        setGUIItem(53,Material.BLUE_WOOL,"§9§l賭けチップを一枚増やす")
+        
+        // 左側にショートカットボタン配置（45-48）
+        if (isPreFlop) {
+            // プリフロップ: 2.5bb, 3bb, 4bb, 5bb
+            setQuickBetButton(45, bbAmount, 2.5, "2.5BB", playerChips, instBet)
+            setQuickBetButton(46, bbAmount, 3.0, "3BB", playerChips, instBet)
+            setQuickBetButton(47, bbAmount, 4.0, "4BB", playerChips, instBet)
+            setQuickBetButton(48, bbAmount, 5.0, "5BB", playerChips, instBet)
+        } else if (currentBet == 0) {
+            // ポストフロップ（ベット）: 30%, 50%, 75%, pot
+            setQuickBetButton(45, pot, 0.3, "30% pot", playerChips, instBet)
+            setQuickBetButton(46, pot, 0.5, "50% pot", playerChips, instBet)
+            setQuickBetButton(47, pot, 0.75, "75% pot", playerChips, instBet)
+            setQuickBetButton(48, pot, 1.0, "pot", playerChips, instBet)
+        } else {
+            // ポストフロップ（レイズ）: 2.5x, 3x, 3.5x, 4x
+            setQuickRaiseButton(45, currentBet, 2.5, "2.5x", playerChips, instBet)
+            setQuickRaiseButton(46, currentBet, 3.0, "3x", playerChips, instBet)
+            setQuickRaiseButton(47, currentBet, 3.5, "3.5x", playerChips, instBet)
+            setQuickRaiseButton(48, currentBet, 4.0, "4x", playerChips, instBet)
+        }
+    }
+    
+    private fun setQuickBetButton(slot: Int, base: Int, multiplier: Double, label: String, playerChips: Int, instBet: Int) {
+        val targetBet = (base * multiplier).toInt()
+        val needChips = targetBet - instBet
+        
+        // スロット位置に応じた寒色→暖色のグラデーション
+        val material = when(slot) {
+            45 -> Material.LIGHT_BLUE_STAINED_GLASS_PANE  // 最小額 - 寒色（水色）
+            46 -> Material.LIME_STAINED_GLASS_PANE        // 中小額 - 中間（ライム）
+            47 -> Material.ORANGE_STAINED_GLASS_PANE      // 中大額 - 中間（オレンジ）
+            48 -> Material.MAGENTA_STAINED_GLASS_PANE     // 最大額 - 暖色（マゼンタ）
+            else -> Material.WHITE_STAINED_GLASS_PANE
+        }
+        
+        val lore = if (needChips > playerChips) {
+            listOf("§e§lオールイン")
+        } else {
+            listOf("§e${targetBet}枚")
+        }
+        setGUIItem(slot, material, "§b§l${label}", lore)
+    }
+    
+    private fun setQuickRaiseButton(slot: Int, currentBet: Int, multiplier: Double, label: String, playerChips: Int, instBet: Int) {
+        val targetBet = (currentBet * multiplier).toInt()
+        val needChips = targetBet - instBet
+        
+        // スロット位置に応じた寒色→暖色のグラデーション
+        val material = when(slot) {
+            45 -> Material.LIGHT_BLUE_STAINED_GLASS_PANE  // 最小倍率 - 寒色（水色）
+            46 -> Material.LIME_STAINED_GLASS_PANE        // 中小倍率 - 中間（ライム）
+            47 -> Material.ORANGE_STAINED_GLASS_PANE      // 中大倍率 - 中間（オレンジ）
+            48 -> Material.MAGENTA_STAINED_GLASS_PANE     // 最大倍率 - 暖色（マゼンタ）
+            else -> Material.WHITE_STAINED_GLASS_PANE
+        }
+        
+        val lore = if (needChips > playerChips) {
+            listOf("§e§lオールイン")
+        } else {
+            listOf("§e${targetBet}枚")
+        }
+        setGUIItem(slot, material, "§d§l${label}", lore)
     }
 
     fun setTurnPBlo(seat: Int){
@@ -143,7 +209,7 @@ class PlayerGUI(private val seat: Int,name: String){
     }
 
     fun reloadRaiseButton(add:Int,minBet:Int){
-        setGUIItem(49, Material.GOLD_NUGGET,add , "§a§l以下の枚数でチップを上乗せする", listOf("§c" + add + "枚追加","§d最小上乗せ枚数は§e${minBet}枚§dです"))
+        setGUIItem(52, Material.GOLD_NUGGET,add , "§a§l以下の枚数でチップを上乗せする", listOf("§c" + add + "枚追加","§d最小上乗せ枚数は§e${minBet}枚§dです"))
     }
 
     fun setActionButtons(){

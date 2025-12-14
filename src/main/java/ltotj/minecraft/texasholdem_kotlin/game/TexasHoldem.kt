@@ -97,6 +97,13 @@ open class TexasHoldem:Thread{
     private var turnPlayerTime=30
     private val mySQL = MySQLManager(Main.plugin, "TexasHoldem")
     private var gameId=0
+    var bigBlindAmount=2 // BBの枚数（デフォルト2）
+    
+    // プリフロップかどうか判定
+    fun isPreFlop():Boolean = community.isEmpty() || community.all { it.num == -1 }
+    
+    // 現在開かれているコミュニティカードの枚数
+    fun getOpenCommunityCount():Int = community.count { it.num != -1 }
 
     open inner class PlayerData(val player: Player, val seat: Int) {
         open val playerGUI = PlayerGUI(seat,"TexasHoldem")
@@ -159,7 +166,8 @@ open class TexasHoldem:Thread{
 
         fun setRaiseMenu(){
             addedChips=lastRaise
-            playerGUI.setRaiseButton(lastRaise)
+            val table = this@TexasHoldem
+            playerGUI.setRaiseButton(lastRaise, table.isPreFlop(), table.pot, table.bet, table.bigBlindAmount, playerChips, instBet)
             playerGUI.reloadRaiseButton(bet + addedChips, lastRaise)
         }
 

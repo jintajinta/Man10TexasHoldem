@@ -668,8 +668,8 @@ open class TexasHoldem:Thread{
                     }
                     k=if(j==k&&round(playerList[handsList[j][0]].hand/10)>round(playerList[i].hand/10)) j+1 else k
                 }
-                sleep(5000)
                 if(foldedList.size!=playerList.size-1) {
+                    sleep(5000)
                     reloadGUI(i)
                 }
             }
@@ -840,19 +840,31 @@ open class TexasHoldem:Thread{
             turnCount=0
             //プリフロップ
             actionTime(bbDifCount)
-            openCommunityCard(0)
-            openCommunityCard(1)
-            openCommunityCard(2)
+            if(foldedList.size!=playerList.size-1) {
+                openCommunityCard(0)
+                openCommunityCard(1)
+                openCommunityCard(2)
+            }
             //フロップ
-            actionTime(dif)
-            openCommunityCard(3)
+            if(foldedList.size!=playerList.size-1) {
+                actionTime(dif)
+            }
+            if(foldedList.size!=playerList.size-1) {
+                openCommunityCard(3)
+            }
             //ターン
-            actionTime(dif)
-            openCommunityCard(4)
+            if(foldedList.size!=playerList.size-1) {
+                actionTime(dif)
+            }
+            if(foldedList.size!=playerList.size-1) {
+                openCommunityCard(4)
+            }
             //リバー
-            actionTime(dif)
-            playSoundAlPl(Sound.ITEM_BOOK_PAGE_TURN, 2F)
+            if(foldedList.size!=playerList.size-1) {
+                actionTime(dif)
+            }
             if(foldedList.size!=playerList.size-1){
+                playSoundAlPl(Sound.ITEM_BOOK_PAGE_TURN, 2F)
                 for (i in 0 until seatSize) if (!foldedList.contains(i)) openPlCard(i)
                 sleep(2000)
             }

@@ -669,7 +669,7 @@ open class TexasHoldem:Thread{
                     k=if(j==k&&round(playerList[handsList[j][0]].hand/10)>round(playerList[i].hand/10)) j+1 else k
                 }
                 if(foldedList.size!=playerList.size-1) {
-                    sleep(5000)
+                    sleep(2500)
                     reloadGUI(i)
                 }
             }

@@ -340,12 +340,22 @@ open class TexasHoldem:Thread{
     }
 
     protected fun setChips(seat: Int, start: Int, end: Int){
-        for(i in start..end){
+        val diff = end - start
+        if (diff <= 0) return
+        // アニメーションは200msで、7ステップ以内に完了するようstepを計算
+        val baseSleep = 200L
+        val maxSteps = 7
+        val step = kotlin.math.max(1, kotlin.math.ceil(diff.toDouble() / maxSteps).toInt())
+        
+        var i = start
+        while (i <= end) {
             playSoundAlPl(Sound.BLOCK_CHAIN_STEP, 2F)
-            for(playerData in playerList){
-                playerData.playerGUI.setChips(seat, i, rate)
+            val displayVal = kotlin.math.min(i + step, end)
+            for (playerData in playerList) {
+                playerData.playerGUI.setChips(seat, displayVal, rate)
             }
-            sleep(200)
+            sleep(baseSleep)
+            i += step
         }
     }
 

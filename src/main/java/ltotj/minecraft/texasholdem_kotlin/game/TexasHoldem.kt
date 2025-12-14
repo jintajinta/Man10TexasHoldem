@@ -681,10 +681,10 @@ open class TexasHoldem:Thread{
             val chipsPerBB = 2 // 2 枚を 1 BB と見なす
             val threshold = 20 * chipsPerBB
             if (totalPotForAnimation >= threshold) {
-                for (i in 0..7) {
+                for (i in 0..4) {
                     setWinnerHead(i % 2 == 0, playerList[singleWinnerSeat].getHead())
                     playSoundAlPl(Sound.ENTITY_FIREWORK_ROCKET_TWINKLE_FAR,1F)
-                    sleep(300)
+                    sleep(500)
                 }
             }
         } else {

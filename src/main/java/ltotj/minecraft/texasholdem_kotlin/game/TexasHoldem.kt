@@ -567,7 +567,7 @@ open class TexasHoldem:Thread{
     }
 
     protected fun setClock(time: Int){
-        val item=ItemStack(Material.CLOCK, if(time>64)64 else time)
+        val item=ItemStack(Material.CLOCK, if(time>64) 64 else if(time<=0) 1 else time)
         val meta=item.itemMeta
         meta.displayName(Component.text("§a残り§e${time}§a秒"))
         item.itemMeta=meta

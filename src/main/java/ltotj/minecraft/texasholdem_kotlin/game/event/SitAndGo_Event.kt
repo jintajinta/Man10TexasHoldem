@@ -36,11 +36,10 @@ object SitAndGo_Event : Listener {
                 }
                 "raise" -> {
                     when (slot) {
-                        49 -> return if (item.type == Material.BARRIER) slot else 0
-                        50 -> return if (item.type == Material.RED_WOOL) slot else 0
-                        51 -> return if (item.type == Material.GOLD_NUGGET) slot else 0
-                        52 -> return if (item.type == Material.BLUE_WOOL) slot else 0
-                        53 -> return if (item.type == Material.LIME_WOOL) slot else 0
+                        50 -> return if (item.type == Material.BARRIER) slot else 0
+                        51 -> return if (item.type == Material.RED_WOOL) slot else 0
+                        52 -> return if (item.type == Material.GOLD_NUGGET) slot else 0
+                        53 -> return if (item.type == Material.BLUE_WOOL) slot else 0
                         45, 46, 47, 48 -> {
                             if (item.type == Material.LIGHT_BLUE_STAINED_GLASS_PANE ||
                                 item.type == Material.LIME_STAINED_GLASS_PANE ||
@@ -85,14 +84,13 @@ object SitAndGo_Event : Listener {
                     53 -> playerData.allIn()
                 }
                 when (matchItem(item, e.slot, "raise")) {
-                    49 -> {
+                    50 -> {
                         playerData.setActionButtons()
                         playerData.addedChips = 0
                     }
-                    50 -> playerData.downBet()
-                    51 -> playerData.preCall.set(true)
-                    52 -> playerData.raiseBet()
-                    53 -> playerData.preCall.set(true)
+                    51 -> playerData.downBet()
+                    52 -> playerData.preCall.set(true)
+                    53 -> playerData.raiseBet()
                     45, 46, 47, 48 -> {
                         val meta = item.itemMeta
                         val lore = meta?.lore()

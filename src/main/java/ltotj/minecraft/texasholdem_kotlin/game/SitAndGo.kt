@@ -125,11 +125,13 @@ class SitAndGo(
     
     // ======== 倍率抽選 ========
     fun pickMultiplier(): Double {
-        val table = mapOf(
-            2.5 to 16.0, 3.0 to 14.5, 3.5 to 13.5, 4.0 to 37.0,
-            5.0 to 8.0, 6.0 to 4.0, 8.0 to 3.0, 10.0 to 2.0,
-            15.0 to 0.7, 20.0 to 0.3
-        )
+        val section = con.getConfigurationSection("sitandgo.multiplierTable") ?: return 2.5
+        val table = section.getKeys(false).mapNotNull { key ->
+            val multiplier = key.toDoubleOrNull() ?: return@mapNotNull null
+            val probability = section.getDouble(key)
+            multiplier to probability
+        }.toMap()
+        
         val random = Random.nextDouble() * 100.0
         var cumulative = 0.0
         for ((mult, weight) in table) {
@@ -141,18 +143,8 @@ class SitAndGo(
     
     // ======== スタック計算 ========
     fun getStartingStack(): Int {
-        val bbAmount = when {
-            multiplier <= 2.5 -> 20
-            multiplier <= 3.0 -> 25
-            multiplier <= 3.5 -> 30
-            multiplier <= 4.0 -> 30
-            multiplier <= 5.0 -> 35
-            multiplier <= 6.0 -> 40
-            multiplier <= 8.0 -> 50
-            multiplier <= 10.0 -> 60
-            multiplier <= 15.0 -> 80
-            else -> 100
-        }
+        val section = con.getConfigurationSection("sitandgo.stackByMultiplier") ?: return 30 * 2
+        val bbAmount = section.getInt(multiplier.toString(), 30)
         val blinds = getBlindStructure()[0]
         return bbAmount * blinds[1]  // BB単位 × BB
     }
@@ -174,13 +166,10 @@ class SitAndGo(
     
     // ======== ブラインド管理 ========
     fun getBlindStructure(): List<List<Int>> {
-        return listOf(
-            listOf(1, 2, 2), listOf(1, 3, 3), listOf(2, 4, 4),
-            listOf(3, 6, 6), listOf(5, 10, 10), listOf(7, 14, 14),
-            listOf(10, 20, 20), listOf(15, 30, 30), listOf(20, 40, 40),
-            listOf(30, 60, 60), listOf(40, 80, 80), listOf(50, 100, 100),
-            listOf(70, 140, 140)
-        )
+        val list = con.getList("sitandgo.blindStructure") ?: return listOf(listOf(1, 2, 2))
+        return list.mapNotNull { item ->
+            (item as? List<*>)?.mapNotNull { it as? Int }
+        }
     }
     
     fun getCurrentBlinds(): Triple<Int, Int, Int> {

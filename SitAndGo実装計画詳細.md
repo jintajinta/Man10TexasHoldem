@@ -93,9 +93,9 @@ CREATE TABLE IF NOT EXISTS sitandgo_log (
 ```
 
 ### チェックリスト
-- [ ] 1.1 sitandgo_rating テーブル作成SQL追加
-- [ ] 1.2 sitandgo_log テーブル作成SQL追加
-- [ ] 1.3 Main.kt の onEnable でテーブル自動作成処理追加
+- [x] 1.1 sitandgo_rating テーブル作成SQL追加
+- [x] 1.2 sitandgo_log テーブル作成SQL追加
+- [x] 1.3 Main.kt の onEnable でテーブル自動作成処理追加
 
 ---
 
@@ -183,8 +183,8 @@ fun getBoolean(path: String): Boolean
 ```
 
 ### チェックリスト
-- [ ] 2.1 config.yml に sitandgo セクション追加
-- [ ] 2.2 Config.kt にセクション取得メソッド追加
+- [x] 2.1 config.yml に sitandgo セクション追加
+- [x] 2.2 Config.kt にセクション取得メソッド追加
 
 ---
 
@@ -477,18 +477,18 @@ fun sendTournamentResult() {
 ```
 
 ### チェックリスト
-- [ ] 3.1 SitAndGo.kt 基本クラス作成
-- [ ] 3.2 TournamentPhase enum 実装
-- [ ] 3.3 SitAndGoPlayerData クラス実装
-- [ ] 3.4 タイムバンクシステム実装
-- [ ] 3.5 pickMultiplier() 倍率抽選実装
-- [ ] 3.6 getStartingStack() スタック計算実装
-- [ ] 3.7 calculatePrize() 賞金計算実装
-- [ ] 3.8 ブラインドレベル管理実装
-- [ ] 3.9 GUI情報表示実装（時間、ブラインド、レート、倍率）
-- [ ] 3.10 順位確定ロジック実装
-- [ ] 3.11 run() メインゲームループ実装
-- [ ] 3.12 endTournament() 終了処理実装
+- [x] 3.1 SitAndGo.kt 基本クラス作成
+- [x] 3.2 TournamentPhase enum 実装
+- [x] 3.3 SitAndGoPlayerData クラス実装
+- [x] 3.4 タイムバンクシステム実装
+- [x] 3.5 pickMultiplier() 倍率抽選実装
+- [x] 3.6 getStartingStack() スタック計算実装
+- [x] 3.7 calculatePrize() 賞金計算実装
+- [x] 3.8 ブラインドレベル管理実装
+- [x] 3.9 GUI情報表示実装（時間、ブラインド、レート、倍率）
+- [x] 3.10 順位確定ロジック実装
+- [x] 3.11 run() メインゲームループ実装
+- [x] 3.12 endTournament() 終了処理実装
 
 ---
 
@@ -532,10 +532,10 @@ object SitAndGo_Event : Listener {
 ```
 
 ### チェックリスト
-- [ ] 4.1 SitAndGo_Event.kt 作成
-- [ ] 4.2 GUIクリック処理実装
-- [ ] 4.3 切断時の自動フォールド処理
-- [ ] 4.4 Main.kt でイベント登録
+- [x] 4.1 SitAndGo_Event.kt 作成
+- [x] 4.2 GUIクリック処理実装
+- [x] 4.3 切断時の自動フォールド処理
+- [x] 4.4 Main.kt でイベント登録
 
 ---
 
@@ -636,10 +636,10 @@ fun playStopEffect(multiplier: Double) {
 ```
 
 ### チェックリスト
-- [ ] 5.1 RouletteDisplay.kt 作成
-- [ ] 5.2 playRouletteAnimation() 実装
-- [ ] 5.3 displayRouletteFrame() GUI表示実装
-- [ ] 5.4 playStopEffect() 停止エフェクト実装
+- [x] 5.1 RouletteDisplay.kt 作成
+- [x] 5.2 playRouletteAnimation() 実装
+- [x] 5.3 displayRouletteFrame() GUI表示実装
+- [x] 5.4 playStopEffect() 停止エフェクト実装
 
 ---
 
@@ -802,14 +802,14 @@ data class RatingEntry(
 ```
 
 ### チェックリスト
-- [ ] 6.1 SitAndGoRating.kt 計算ロジック実装
-- [ ] 6.2 expectedWinRate() 実装
-- [ ] 6.3 calculateK() 実装
-- [ ] 6.4 calculateRatingChanges() 実装（2位保証込み）
-- [ ] 6.5 初心者保護ロジック実装
-- [ ] 6.6 RatingRepository.kt DB操作クラス実装
-- [ ] 6.7 getRating() / updateRating() 実装
-- [ ] 6.8 getTopRatings() 実装
+- [x] 6.1 SitAndGoRating.kt 計算ロジック実装
+- [x] 6.2 expectedWinRate() 実装
+- [x] 6.3 calculateK() 実装
+- [x] 6.4 calculateRatingChanges() 実装（2位保証込み）
+- [x] 6.5 初心者保護ロジック実装
+- [x] 6.6 RatingRepository.kt DB操作クラス実装
+- [x] 6.7 getRating() / updateRating() 実装
+- [x] 6.8 getTopRatings() 実装
 
 ---
 
@@ -914,15 +914,15 @@ mysql.execute("CREATE TABLE IF NOT EXISTS sitandgo_log ...")
 ```
 
 ### チェックリスト
-- [ ] 7.1 SitAndGo_Command.kt 作成
-- [ ] 7.2 /sng start 実装
-- [ ] 7.3 /sng join 実装
-- [ ] 7.4 /sng leave 実装
-- [ ] 7.5 /sng rating 実装
-- [ ] 7.6 /sng top 実装
-- [ ] 7.7 plugin.yml にコマンド追加
-- [ ] 7.8 Main.kt にコマンド登録・テーブル追加
-- [ ] 7.9 TabCompleter 実装
+- [x] 7.1 SitAndGo_Command.kt 作成
+- [x] 7.2 /sng start 実装
+- [x] 7.3 /sng join 実装
+- [x] 7.4 /sng leave 実装
+- [x] 7.5 /sng rating 実装
+- [x] 7.6 /sng top 実装
+- [x] 7.7 plugin.yml にコマンド追加
+- [x] 7.8 Main.kt にコマンド登録・テーブル追加
+- [x] 7.9 TabCompleter 実装
 
 ---
 
@@ -996,51 +996,51 @@ mysql.execute("CREATE TABLE IF NOT EXISTS sitandgo_log ...")
 ## 最終チェックリスト
 
 ### フェーズ1: DB
-- [ ] sitandgo_rating テーブル作成
-- [ ] sitandgo_log テーブル作成
-- [ ] Main.kt onEnable でテーブル自動作成
+- [x] sitandgo_rating テーブル作成
+- [x] sitandgo_log テーブル作成
+- [x] Main.kt onEnable でテーブル自動作成
 
 ### フェーズ2: Config
-- [ ] config.yml sitandgo セクション追加
-- [ ] Config.kt メソッド追加
+- [x] config.yml sitandgo セクション追加
+- [x] Config.kt メソッド追加
 
 ### フェーズ3: 本体
-- [ ] SitAndGo.kt 基本構造
-- [ ] TournamentPhase enum
-- [ ] SitAndGoPlayerData クラス
-- [ ] タイムバンクシステム
-- [ ] pickMultiplier() 倍率抽選
-- [ ] calculatePrize() 賞金計算
-- [ ] ブラインドレベル管理
-- [ ] GUI情報表示（時間、ブラインド、レート、倍率）
-- [ ] 順位確定ロジック
-- [ ] run() メインループ
-- [ ] endTournament() 終了処理
+- [x] SitAndGo.kt 基本構造
+- [x] TournamentPhase enum
+- [x] SitAndGoPlayerData クラス
+- [x] タイムバンクシステム
+- [x] pickMultiplier() 倍率抽選
+- [x] calculatePrize() 賞金計算
+- [x] ブラインドレベル管理
+- [x] GUI情報表示（時間、ブラインド、レート、倍率）
+- [x] 順位確定ロジック
+- [x] run() メインループ
+- [x] endTournament() 終了処理
 
 ### フェーズ4: イベント
-- [ ] SitAndGo_Event.kt 作成
-- [ ] GUIクリック処理
-- [ ] 切断時の自動フォールド
-- [ ] Main.kt イベント登録
+- [x] SitAndGo_Event.kt 作成
+- [x] GUIクリック処理
+- [x] 切断時の自動フォールド
+- [x] Main.kt イベント登録
 
 ### フェーズ5: ルーレット
-- [ ] RouletteDisplay.kt 作成
-- [ ] playRouletteAnimation() 実装
-- [ ] 倍率別エフェクト実装
+- [x] RouletteDisplay.kt 作成
+- [x] playRouletteAnimation() 実装
+- [x] 倍率別エフェクト実装
 
 ### フェーズ6: レーティング
-- [ ] SitAndGoRating.kt 計算ロジック
-- [ ] RatingRepository.kt DB操作
-- [ ] 2位保証ロジック
-- [ ] 初心者保護ロジック
-- [ ] バイイン10万判定
+- [x] SitAndGoRating.kt 計算ロジック
+- [x] RatingRepository.kt DB操作
+- [x] 2位保証ロジック
+- [x] 初心者保護ロジック
+- [x] バイイン10万判定
 
 ### フェーズ7: コマンド
-- [ ] SitAndGo_Command.kt 作成
-- [ ] /sng start, join, leave, rating, top
-- [ ] plugin.yml コマンド追加
-- [ ] Main.kt コマンド登録
-- [ ] TabCompleter
+- [x] SitAndGo_Command.kt 作成
+- [x] /sng start, join, leave, rating, top
+- [x] plugin.yml コマンド追加
+- [x] Main.kt コマンド登録
+- [x] TabCompleter
 
 ### フェーズ8: テスト
 - [ ] 倍率シミュレーション

@@ -224,10 +224,12 @@ class SitAndGo(
         phase = TournamentPhase.PLAYING
     }
     
-    fun displayRouletteFrame(item: RouletteDisplay.RouletteItem) {
+    fun displayRouletteFrame(item: ltotj.minecraft.texasholdem_kotlin.game.utility.RouletteItem) {
         val displayItem = ItemStack(item.material)
-        displayItem.itemMeta = displayItem.itemMeta?.apply {
-            displayName(Component.text(item.displayName))
+        val meta = displayItem.itemMeta
+        if (meta != null) {
+            meta.displayName(Component.text(item.displayName))
+            displayItem.itemMeta = meta
         }
         
         for (pd in playerList) {

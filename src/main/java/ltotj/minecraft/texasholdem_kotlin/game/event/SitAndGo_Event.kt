@@ -27,10 +27,9 @@ object SitAndGo_Event : Listener {
     @EventHandler
     fun onPlayerQuit(e: PlayerQuitEvent) {
         val table = getSitAndGoTable(e.player) ?: return
-        val playerData = table.playerList.find { it.player.uniqueId == e.player.uniqueId } ?: return
         
-        // 自動フォールド
-        playerData.fold()
+        // 自動フォールド（TexasHoldemのgetPlDataを使用）
+        Main.getPlData(e.player)?.fold()
     }
     
     // プレイヤーキック時
@@ -38,10 +37,9 @@ object SitAndGo_Event : Listener {
     fun onPlayerKick(e: PlayerKickEvent) {
         // onPlayerQuitと同様
         val table = getSitAndGoTable(e.player) ?: return
-        val playerData = table.playerList.find { it.player.uniqueId == e.player.uniqueId } ?: return
         
         // 自動フォールド
-        playerData.fold()
+        Main.getPlData(e.player)?.fold()
     }
     
     // ヘルパーメソッド: プレイヤーが所属するSitAndGoテーブルを取得

@@ -47,7 +47,7 @@ object SitAndGo_Command : CommandExecutor, TabCompleter {
         }
         
         // 所持金チェック
-        if (!Main.vault.has(sender.uniqueId, buyIn.toDouble())) {
+        if (Main.vault.getBalance(sender.uniqueId) < buyIn) {
             sender.sendMessage("§c所持金が不足しています")
             return
         }
@@ -104,7 +104,7 @@ object SitAndGo_Command : CommandExecutor, TabCompleter {
         }
         
         // 所持金チェック
-        if (!Main.vault.has(sender.uniqueId, table.buyIn.toDouble())) {
+        if (Main.vault.getBalance(sender.uniqueId) < table.buyIn) {
             sender.sendMessage("§c所持金が不足しています（必要: ${table.buyIn}）")
             return
         }
@@ -181,12 +181,12 @@ object SitAndGo_Command : CommandExecutor, TabCompleter {
         
         sender.sendMessage("§6======= §eSit & Go ランキング §6=======")
         for ((index, entry) in topRatings.withIndex()) {
-            val rank = index + 1
-            val medal = when (rank) {
+            val rankNum = index + 1
+            val medal = when (rankNum) {
                 1 -> "§6§l🏆"
                 2 -> "§f§l🥈"
                 3 -> "§e§l🥉"
-                else -> "§7$rank位"
+                else -> "§7${rankNum}位"
             }
             val displayRating = ratingRepo.getDisplayRating(entry.rating)
             sender.sendMessage("$medal §f${entry.name} §7- §b${displayRating} §8(${entry.gamesPlayed}戦 ${entry.wins}勝)")
@@ -195,14 +195,12 @@ object SitAndGo_Command : CommandExecutor, TabCompleter {
     
     // /sng help
     private fun handleHelp(sender: CommandSender) {
-        sender.sendMessage(listOf(
-            "§6=== Sit & Go コマンド ===",
-            "§e/sng start <金額> §7- トーナメント開始",
-            "§e/sng join <ホスト名> §7- 参加",
-            "§e/sng leave §7- 離脱（募集中のみ）",
-            "§e/sng rating [プレイヤー] §7- レート確認",
-            "§e/sng top §7- ランキング"
-        ))
+        sender.sendMessage("§6=== Sit & Go コマンド ===")
+        sender.sendMessage("§e/sng start <金額> §7- トーナメント開始")
+        sender.sendMessage("§e/sng join <ホスト名> §7- 参加")
+        sender.sendMessage("§e/sng leave §7- 離脱（募集中のみ）")
+        sender.sendMessage("§e/sng rating [プレイヤー] §7- レート確認")
+        sender.sendMessage("§e/sng top §7- ランキング")
     }
     
     override fun onTabComplete(sender: CommandSender, cmd: Command, label: String, args: Array<out String>): List<String> {

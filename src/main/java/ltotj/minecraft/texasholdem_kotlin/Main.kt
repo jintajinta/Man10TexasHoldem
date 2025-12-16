@@ -3,8 +3,10 @@ package ltotj.minecraft.texasholdem_kotlin
 import ltotj.minecraft.texasholdem_kotlin.game.SitAndGo
 import ltotj.minecraft.texasholdem_kotlin.game.TexasHoldem
 import ltotj.minecraft.texasholdem_kotlin.game.command.AllinORFold_Command
+import ltotj.minecraft.texasholdem_kotlin.game.command.SitAndGo_Command
 import ltotj.minecraft.texasholdem_kotlin.game.command.TexasHoldem_Command
 import ltotj.minecraft.texasholdem_kotlin.game.event.AllinORFold_Event
+import ltotj.minecraft.texasholdem_kotlin.game.event.SitAndGo_Event
 import ltotj.minecraft.texasholdem_kotlin.game.event.TexasHoldem_Event
 import org.bukkit.entity.Player
 import org.bukkit.plugin.Plugin
@@ -55,7 +57,9 @@ class Main : JavaPlugin() {
         playable.set(config.getBoolean("canPlay"))
         vault = VaultManager(this)
         server.pluginManager.registerEvents(TexasHoldem_Event,this)
+        server.pluginManager.registerEvents(SitAndGo_Event,this)
         getCommand("poker")!!.setExecutor(TexasHoldem_Command)
+        getCommand("sng")!!.setExecutor(SitAndGo_Command)
 
         executor.execute {
             val mysql=MySQLManager(this,"TexasHoldem_onEnable")

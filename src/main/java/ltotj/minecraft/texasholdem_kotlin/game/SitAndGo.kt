@@ -197,7 +197,7 @@ class SitAndGo(
         val totalSpins = 3  // 3周
         val totalSteps = RouletteDisplay.REEL_ITEMS.size * totalSpins + targetIndex
         
-        var delay = 50L  // 初期50ms（高速）
+        var delay: Long
         val maxDelay = 400L  // 最終400ms（低速）
         
         for (step in 0 until totalSteps) {
@@ -323,8 +323,10 @@ class SitAndGo(
         }
     }
     
+    @Suppress("UNUSED_PARAMETER")
     fun saveTournamentLog(rankings: List<Pair<UUID, Int>>) {
         // TODO: sitandgo_logテーブルにログ保存
+        // rankingsパラメータは実装時に使用予定
     }
     
     fun sendTournamentResult(rankings: List<Pair<UUID, Int>>) {

@@ -1014,12 +1014,13 @@ mysql.execute("CREATE TABLE IF NOT EXISTS sitandgo_log ...")
 - [x] ブラインドレベル管理
 - [x] GUI情報表示（時間、ブラインド、レート、倍率）
 - [x] 順位確定ロジック
-- [x] run() メインループ
+- [ ] **run() TexasHoldem統合**（親クラスのrun()呼び出し・オーバーライド調整）
 - [x] endTournament() 終了処理
+- [ ] **saveTournamentLog() ログ保存処理**
 
 ### フェーズ4: イベント
 - [x] SitAndGo_Event.kt 作成
-- [x] GUIクリック処理
+- [ ] **GUIクリック処理**（アクションボタン処理の実装）
 - [x] 切断時の自動フォールド
 - [x] Main.kt イベント登録
 
@@ -1041,8 +1042,13 @@ mysql.execute("CREATE TABLE IF NOT EXISTS sitandgo_log ...")
 - [x] plugin.yml コマンド追加
 - [x] Main.kt コマンド登録
 - [x] TabCompleter
+- [ ] **プレイヤーリスト管理**（参加時のplayerList追加・離脱時の削除）
 
-### フェーズ8: テスト
+### フェーズ8: テスト前準備
+- [x] コンパイルエラー修正
+- [x] ビルド成功確認
+
+### フェーズ9: テスト・検証
 - [ ] 倍率シミュレーション
 - [ ] 賞金計算テスト
 - [ ] レート計算テスト

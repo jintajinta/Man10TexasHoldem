@@ -64,13 +64,17 @@ object SitAndGo_Command : CommandExecutor, TabCompleter {
         // テーブル作成
         val table = SitAndGo(sender, buyIn)
         Main.sitAndGoTables[sender.uniqueId] = table
-        Main.currentPlayers[sender.uniqueId] = sender.uniqueId
+        
+        // ホスト自身を参加させる
+        table.addSitAndGoPlayer(sender)
         
         sender.sendMessage("§aSit & Go トーナメントを作成しました")
         sender.sendMessage("§7バイイン: §e${buyIn}")
         sender.sendMessage("§7/sng join ${sender.name} で参加できます")
         
-        // TODO: 4人揃ったらゲーム開始
+        // 募集メッセージをブロードキャスト
+        Bukkit.broadcast(net.kyori.adventure.text.Component.text("§6§l[SitAndGo] §e${sender.name} §aがバイイン §e${buyIn} §aでトーナメントを募集中！ §7(1/4)"))
+        Bukkit.broadcast(net.kyori.adventure.text.Component.text("§7/sng join ${sender.name} で参加"))
     }
     
     // /sng join <host>
@@ -113,11 +117,22 @@ object SitAndGo_Command : CommandExecutor, TabCompleter {
         Main.vault.withdraw(sender.uniqueId, table.buyIn.toDouble())
         
         // テーブルに参加
-        Main.currentPlayers[sender.uniqueId] = host.uniqueId
+        if (!table.addSitAndGoPlayer(sender)) {
+            // 参加失敗時は返金
+            Main.vault.deposit(sender.uniqueId, table.buyIn.toDouble())
+            sender.sendMessage("§cテーブルに参加できませんでした")
+            return
+        }
         
         sender.sendMessage("§a${hostName}のテーブルに参加しました")
         
-        // TODO: playerListに追加、4人揃ったら開始
+        // 参加人数をブロードキャスト
+        val count = table.getPlayerCount()
+        Bukkit.broadcast(net.kyori.adventure.text.Component.text("§6§l[SitAndGo] §e${sender.name} §aが参加！ §7(${count}/4)"))
+        
+        if (count == 4) {
+            Bukkit.broadcast(net.kyori.adventure.text.Component.text("§6§l[SitAndGo] §a4人揃いました！ルーレット開始！"))
+        }
     }
     
     // /sng leave
@@ -143,11 +158,10 @@ object SitAndGo_Command : CommandExecutor, TabCompleter {
         Main.vault.deposit(sender.uniqueId, table.buyIn.toDouble())
         
         // テーブルから離脱
+        table.removeSitAndGoPlayer(sender)
         Main.currentPlayers.remove(sender.uniqueId)
         
         sender.sendMessage("§7テーブルから離脱しました")
-        
-        // TODO: playerListから削除、ホストの場合はテーブル削除
     }
     
     // /sng rating [player]

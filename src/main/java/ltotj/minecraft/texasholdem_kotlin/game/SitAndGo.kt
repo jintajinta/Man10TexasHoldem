@@ -36,6 +36,9 @@ class SitAndGo(
     var blindLevelStartTime: Long = 0
     val finishOrder: MutableList<UUID> = mutableListOf()
     
+    // SitAndGo専用プレイヤーリスト（親クラスと別に管理）
+    val sitAndGoPlayerList = ArrayList<SitAndGoPlayerData>()
+    
     // ======== 内部クラス: SitAndGoPlayerData ========
     inner class SitAndGoPlayerData(player: Player, seat: Int) : PlayerData(player, seat) {
         var eliminationOrder: Int = -1
@@ -49,6 +52,76 @@ class SitAndGo(
         var additionalTimeRemaining: Int = 0  // アディショナル持ち時間
         var afkCount: Int = 0                 // 連続放置回数
     }
+    
+    // ======== プレイヤー管理 ========
+    fun addSitAndGoPlayer(player: Player): Boolean {
+        if (sitAndGoPlayerList.size >= 4 || phase != TournamentPhase.WAITING) return false
+        if (sitAndGoPlayerList.any { it.player.uniqueId == player.uniqueId }) return false
+        
+        val seat = sitAndGoPlayerList.size
+        val playerData = SitAndGoPlayerData(player, seat)
+        
+        // レート取得
+        val mysql = MySQLManager(ltotj.minecraft.texasholdem_kotlin.Main.plugin, "SitAndGo_Rating_AddPlayer")
+        val ratingRepo = ltotj.minecraft.texasholdem_kotlin.rating.RatingRepository(mysql)
+        playerData.ratingBefore = ratingRepo.getRating(player.uniqueId)
+        
+        sitAndGoPlayerList.add(playerData)
+        seatMap[player.uniqueId] = seat
+        
+        // GUIを開く
+        player.openInventory(playerData.playerGUI.inv)
+        
+        // 全プレイヤーに席情報を更新
+        for (pd in sitAndGoPlayerList) {
+            pd.playerGUI.setCoin(seat, player.name, firstChips)
+            pd.playerGUI.inv.setItem(cardPosition(seat) - 1, playerData.getHead())
+        }
+        
+        // 4人揃ったら開始
+        if (sitAndGoPlayerList.size == 4) {
+            // playerListにコピー（親クラス互換）
+            playerList.clear()
+            playerList.addAll(sitAndGoPlayerList)
+            start()
+        }
+        
+        return true
+    }
+    
+    fun removeSitAndGoPlayer(player: Player): Boolean {
+        if (phase != TournamentPhase.WAITING) return false
+        
+        val playerData = sitAndGoPlayerList.find { it.player.uniqueId == player.uniqueId } ?: return false
+        sitAndGoPlayerList.remove(playerData)
+        seatMap.remove(player.uniqueId)
+        
+        // 席番号を再割り当て
+        for ((index, pd) in sitAndGoPlayerList.withIndex()) {
+            pd.playerGUI.inv.clear()
+            seatMap[pd.player.uniqueId] = index
+        }
+        
+        // ホストが抜けた場合はテーブル解散
+        if (player.uniqueId == masterPlayer.uniqueId) {
+            dissolveTournament()
+            return true
+        }
+        
+        return true
+    }
+    
+    fun dissolveTournament() {
+        for (pd in sitAndGoPlayerList) {
+            vault.deposit(pd.player.uniqueId, buyIn.toDouble())
+            pd.player.sendMessage("§e§lホストが離脱したためトーナメントが解散しました。返金されました。")
+            ltotj.minecraft.texasholdem_kotlin.Main.currentPlayers.remove(pd.player.uniqueId)
+            pd.player.closeInventory()
+        }
+        ltotj.minecraft.texasholdem_kotlin.Main.sitAndGoTables.remove(masterPlayer.uniqueId)
+    }
+    
+    fun getPlayerCount(): Int = sitAndGoPlayerList.size
     
     // ======== 倍率抽選 ========
     fun pickMultiplier(): Double {

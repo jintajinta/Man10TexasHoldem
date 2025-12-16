@@ -1,9 +1,11 @@
 package ltotj.minecraft.texasholdem_kotlin.game
 
+import ltotj.minecraft.texasholdem_kotlin.Main
 import ltotj.minecraft.texasholdem_kotlin.Main.Companion.con
 import ltotj.minecraft.texasholdem_kotlin.Main.Companion.vault
 import ltotj.minecraft.texasholdem_kotlin.MySQLManager
 import ltotj.minecraft.texasholdem_kotlin.Utility.createGUIItem
+import ltotj.minecraft.texasholdem_kotlin.game.utility.PlayerGUI
 import ltotj.minecraft.texasholdem_kotlin.game.utility.RouletteDisplay
 import ltotj.minecraft.texasholdem_kotlin.rating.RatingRepository
 import ltotj.minecraft.texasholdem_kotlin.rating.SitAndGoRating
@@ -41,6 +43,9 @@ class SitAndGo(
     
     // ======== 内部クラス: SitAndGoPlayerData ========
     inner class SitAndGoPlayerData(player: Player, seat: Int) : PlayerData(player, seat) {
+        // PlayerGUIのタイトルをSitAndGoに変更
+        override val playerGUI = PlayerGUI(seat, "SitAndGo")
+        
         var eliminationOrder: Int = -1
         var finalRank: Int = 0
         var prizeWon: Long = 0
@@ -72,6 +77,9 @@ class SitAndGo(
         
         sitAndGoPlayerList.add(playerData)
         seatMap[player.uniqueId] = seat
+        
+        // Main.currentPlayersに登録
+        Main.currentPlayers[player.uniqueId] = masterPlayer.uniqueId
         
         // GUIを開く
         player.openInventory(playerData.playerGUI.inv)

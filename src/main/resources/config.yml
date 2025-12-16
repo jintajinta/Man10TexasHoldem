@@ -10,6 +10,67 @@ maxChipRate: 10000000 #int
 firstNumberOfChips: 30
 canPlay: true
 
+sitandgo:
+  enabled: true
+  minBuyIn: 100
+  ratingMinBuyIn: 100000
+  maxPlayers: 4
+  waitTimeSeconds: 60
+  blindLevelSeconds: 180
+  
+  timeBank:
+    defaultTime: 15
+    additionalTime: 15
+    additionalPerTurn: 5
+    afkPenalty: 5
+  
+  multiplierTable:
+    "2.5": 16.0
+    "3.0": 14.5
+    "3.5": 13.5
+    "4.0": 37.0
+    "5.0": 8.0
+    "6.0": 4.0
+    "8.0": 3.0
+    "10.0": 2.0
+    "15.0": 0.7
+    "20.0": 0.3
+  
+  stackByMultiplier:
+    "2.5": 20
+    "3.0": 25
+    "3.5": 30
+    "4.0": 30
+    "5.0": 35
+    "6.0": 40
+    "8.0": 50
+    "10.0": 60
+    "15.0": 80
+    "20.0": 100
+  
+  blindStructure:
+    - [1, 2, 2]
+    - [1, 3, 3]
+    - [2, 4, 4]
+    - [3, 6, 6]
+    - [5, 10, 10]
+    - [7, 14, 14]
+    - [10, 20, 20]
+    - [15, 30, 30]
+    - [20, 40, 40]
+    - [30, 60, 60]
+    - [40, 80, 80]
+    - [50, 100, 100]
+    - [70, 140, 140]
+  
+  rating:
+    initialRating: 2500
+    maxDisplayRating: 5000
+    eloScale: 8250
+    baseK: 80
+    baseMinutes: 16.8
+    protectionThreshold: 1000
+
 #最初の0~3はスペード、ダイヤ、ハート、クラブを表す
 #その後は数字　14は1のこと
 

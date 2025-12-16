@@ -1,5 +1,6 @@
 package ltotj.minecraft.texasholdem_kotlin
 
+import ltotj.minecraft.texasholdem_kotlin.game.SitAndGo
 import ltotj.minecraft.texasholdem_kotlin.game.TexasHoldem
 import ltotj.minecraft.texasholdem_kotlin.game.command.AllinORFold_Command
 import ltotj.minecraft.texasholdem_kotlin.game.command.TexasHoldem_Command
@@ -21,6 +22,7 @@ class Main : JavaPlugin() {
 
         lateinit var con: Config
         lateinit var texasHoldemTables:HashMap<UUID, TexasHoldem>
+        lateinit var sitAndGoTables:HashMap<UUID, SitAndGo>
         lateinit var currentPlayers:HashMap<UUID, UUID>
         lateinit var plugin: JavaPlugin
         lateinit var playable:AtomicBoolean
@@ -46,6 +48,7 @@ class Main : JavaPlugin() {
         saveDefaultConfig()
         con=Config(this)
         texasHoldemTables=HashMap()
+        sitAndGoTables=HashMap()
         currentPlayers=HashMap()
         plugin =this
         playable=AtomicBoolean()
@@ -68,6 +71,40 @@ class Main : JavaPlugin() {
                     "    foldP varchar(20) null,\n" +
                     "\n" +
                     "    primary key(id)\n" +
+                    ");")
+            
+            // Sit and Go rating table
+            mysql.execute("CREATE TABLE IF NOT EXISTS sitandgo_rating (\n" +
+                    "    id INT UNSIGNED AUTO_INCREMENT,\n" +
+                    "    uuid VARCHAR(36) UNIQUE NOT NULL,\n" +
+                    "    name VARCHAR(16) NULL,\n" +
+                    "    rating_internal INT DEFAULT 2500,\n" +
+                    "    games_played INT DEFAULT 0,\n" +
+                    "    wins INT DEFAULT 0,\n" +
+                    "    second_place INT DEFAULT 0,\n" +
+                    "    third_place INT DEFAULT 0,\n" +
+                    "    fourth_place INT DEFAULT 0,\n" +
+                    "    total_prize BIGINT DEFAULT 0,\n" +
+                    "    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,\n" +
+                    "    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n" +
+                    "    PRIMARY KEY(id)\n" +
+                    ");")
+            mysql.execute("CREATE INDEX IF NOT EXISTS sitandgo_rating_uuid_index ON sitandgo_rating(uuid);")
+            mysql.execute("CREATE INDEX IF NOT EXISTS sitandgo_rating_rating_index ON sitandgo_rating(rating_internal DESC);")
+            
+            // Sit and Go log table
+            mysql.execute("CREATE TABLE IF NOT EXISTS sitandgo_log (\n" +
+                    "    id INT UNSIGNED AUTO_INCREMENT,\n" +
+                    "    start_time DATETIME,\n" +
+                    "    end_time DATETIME,\n" +
+                    "    buy_in BIGINT,\n" +
+                    "    multiplier DOUBLE,\n" +
+                    "    total_prize BIGINT,\n" +
+                    "    p1_uuid VARCHAR(36), p1_name VARCHAR(16), p1_rank INT, p1_prize BIGINT, p1_rating_before INT, p1_rating_after INT,\n" +
+                    "    p2_uuid VARCHAR(36), p2_name VARCHAR(16), p2_rank INT, p2_prize BIGINT, p2_rating_before INT, p2_rating_after INT,\n" +
+                    "    p3_uuid VARCHAR(36), p3_name VARCHAR(16), p3_rank INT, p3_prize BIGINT, p3_rating_before INT, p3_rating_after INT,\n" +
+                    "    p4_uuid VARCHAR(36), p4_name VARCHAR(16), p4_rank INT, p4_prize BIGINT, p4_rating_before INT, p4_rating_after INT,\n" +
+                    "    PRIMARY KEY(id)\n" +
                     ");")
         }
     }

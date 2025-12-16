@@ -51,6 +51,10 @@ class SitAndGo(
         var defaultTimeRemaining: Int = 15    // デフォルト持ち時間
         var additionalTimeRemaining: Int = 0  // アディショナル持ち時間
         var afkCount: Int = 0                 // 連続放置回数
+        
+        // デバッグ用Bot判定
+        var isBot: Boolean = false
+        var botName: String = ""
     }
     
     // ======== プレイヤー管理 ========
@@ -122,6 +126,36 @@ class SitAndGo(
     }
     
     fun getPlayerCount(): Int = sitAndGoPlayerList.size
+    
+    // ======== デバッグ用: ダミープレイヤー追加 ========
+    fun addDebugBots(count: Int) {
+        for (i in 1..count) {
+            if (sitAndGoPlayerList.size >= 4) break
+            
+            val seat = sitAndGoPlayerList.size
+            val botPlayer = masterPlayer  // ダミーとして同じプレイヤーを使用（実際にはGUI非表示）
+            val playerData = SitAndGoPlayerData(botPlayer, seat)
+            playerData.isBot = true
+            playerData.botName = "Bot$i"
+            
+            // デフォルトレート
+            playerData.ratingBefore = 2500
+            
+            sitAndGoPlayerList.add(playerData)
+            
+            // 全プレイヤーのGUIを更新
+            for (pd in sitAndGoPlayerList.filter { !it.isBot }) {
+                pd.playerGUI.setCoin(seat, "§7Bot$i", firstChips)
+            }
+        }
+        
+        // 4人揃ったら開始
+        if (sitAndGoPlayerList.size == 4) {
+            playerList.clear()
+            playerList.addAll(sitAndGoPlayerList)
+            start()
+        }
+    }
     
     // ======== 倍率抽選 ========
     fun pickMultiplier(): Double {
@@ -455,6 +489,39 @@ class SitAndGo(
         )
         for (playerData in playerList) {
             for (msg in messages) playerData.player.sendMessage(msg)
+        }
+    }
+    
+    // ======== Bot自動アクション ========
+    override fun actionTime(dif: Int) {
+        super.actionTime(dif)
+        
+        // 現在のプレイヤーがBotの場合、自動アクション
+        val currentSeat = turnSeat()
+        val currentPd = playerList.getOrNull(currentSeat) as? SitAndGoPlayerData ?: return
+        if (!currentPd.isBot) return
+        
+        // 0.5秒待ってからランダムアクション
+        Thread.sleep(500)
+        
+        val random = Random.nextInt(100)
+        when {
+            currentPd.playerChips <= bet - currentPd.instBet -> {
+                // オールイン
+                currentPd.call()
+            }
+            random < 30 -> {
+                // 30%でフォールド
+                currentPd.fold()
+            }
+            random < 80 -> {
+                // 50%でコール
+                currentPd.call()
+            }
+            else -> {
+                // 20%でオールイン
+                currentPd.allIn()
+            }
         }
     }
     

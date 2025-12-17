@@ -311,20 +311,14 @@ class SitAndGo(
         val (sb, bb, bba) = getCurrentBlinds()
         val nextLevelIn = getSecondsUntilNextLevel()
         
-        // スロット13: ストラクチャ情報（コンパス）
-        val structureItem = ItemStack(Material.COMPASS)
+        // スロット18: コンパス（ストラクチャタイマー + 情報統合、スタック数=残り時間）
+        val structureItem = ItemStack(Material.COMPASS, maxOf(1, minOf(64, nextLevelIn)))
         structureItem.itemMeta = structureItem.itemMeta?.apply {
-            displayName(Component.text("§6ブラインド構成"))
+            displayName(Component.text("§e次レベルまで §f${nextLevelIn}秒"))
             lore(listOf(
                 Component.text("§7現在: Lv.${currentBlindLevel + 1}"),
                 Component.text("§7SB:$sb / BB:$bb / BBA:$bba")
             ))
-        }
-        
-        // スロット15: ストラクチャタイマー（時計）
-        val timerItem = ItemStack(Material.CLOCK, maxOf(1, minOf(64, nextLevelIn)))
-        timerItem.itemMeta = timerItem.itemMeta?.apply {
-            displayName(Component.text("§e次レベルまで §f${nextLevelIn}秒"))
         }
         
         // スロット27: 倍率・賞金プール（ルーレットと同じアイテム）
@@ -342,8 +336,7 @@ class SitAndGo(
         
         // 全プレイヤーのGUIに反映
         for (pd in playerList) {
-            pd.playerGUI.inv.setItem(13, structureItem)
-            pd.playerGUI.inv.setItem(15, timerItem)
+            pd.playerGUI.inv.setItem(18, structureItem)
             pd.playerGUI.inv.setItem(27, prizeItem)
             
             // スロット26: 各自のレート表示
@@ -576,7 +569,7 @@ class SitAndGo(
         val meta = item.itemMeta
         meta.displayName(Component.text(displayText))
         item.itemMeta = meta
-        setItemAlPl(18, item)
+        setItemAlPl(19, item) // スロット19: アクションタイマー（持ち時間）
     }
 
     // ======== アクションタイマー（Bot対応 & タイムバンク実装） ========
@@ -620,7 +613,7 @@ class SitAndGo(
             // ターン終了処理
             currentPd.playerGUI.removeButton()
             removeItem(chipPosition(currentSeat) - 3)
-            removeItem(18) // アクションタイマー削除 (18に変更)
+            removeItem(19) // アクションタイマー削除（スロット19）
             setCoin(currentSeat)
             turnCount += 1
         }
@@ -708,13 +701,6 @@ class SitAndGo(
                     "§c${secondsRemaining}" // アディショナル消費中
                 }
                 setClockFormatted(displayTime, secondsRemaining)
-                
-                // --- ストラクチャタイマーの更新 (毎秒) ---
-                val (sb, bb, bba) = getCurrentBlinds()
-                val nextLevelIn = getSecondsUntilNextLevel()
-                for(pd in playerList) {
-                   updateBlindInfoGUI() // 簡易更新
-                }
             }
             
             // タイムアウト
@@ -831,7 +817,7 @@ class SitAndGo(
             Main.plugin.logger.info("[SitAndGo Debug] Round start - SB: $sb, BB: $bb, BBA: $bba, currentBlindLevel: $currentBlindLevel")
             bigBlindAmount = bb
             
-            // BBA (Big Blind Ante) 徴収 - BBポジションのみ
+            // BBA (Big Blind Ante) 徴収 - BBポジションから
             if (bba > 0) {
                 val bbPosition = (firstSeat + 1) % seatSize
                 if (!foldedList.contains(bbPosition)) {
@@ -846,25 +832,41 @@ class SitAndGo(
                 }
             }
             
-            // SBとBBの強制ベット
-            var bbCount = 0
+            // SBとBBの強制ベット（直接処理）
+            bet = 0 // ベットをリセット
             var bbDifCount = 0
-            while (bbCount < 2) {
-                val currentPlayer = playerList[turnSeat()]
-                if (!foldedList.contains(turnSeat())) {
-                    val betAmount = if (bbCount == 0) sb else bb
-                    currentPlayer.addedChips = betAmount
-                    Main.plugin.logger.info("[SitAndGo Debug] Player ${currentPlayer.player.name} posting ${if (bbCount == 0) "SB" else "BB"}: $betAmount")
-                    if (currentPlayer.call()) {
-                        setCoin(turnSeat())
-                        currentPlayer.action = false
-                        bbCount++
-                    }
-                }
-                turnCount += 1
-                bbDifCount++
+            
+            // SBポスト
+            val sbPosition = turnSeat()
+            if (!foldedList.contains(sbPosition)) {
+                val sbPlayer = playerList[sbPosition]
+                val sbAmount = minOf(sb, sbPlayer.playerChips)
+                sbPlayer.playerChips -= sbAmount
+                sbPlayer.instBet = sbAmount
+                sbPlayer.totalBetAmount += sbAmount
+                bet = sb // betをSBに設定
+                Main.plugin.logger.info("[SitAndGo Debug] Player ${sbPlayer.player.name} posts SB: $sbAmount")
+                setCoin(sbPosition)
             }
-            lastRaise = bb
+            turnCount += 1
+            bbDifCount++
+            
+            // BBポスト
+            val bbPosition = turnSeat()
+            if (!foldedList.contains(bbPosition)) {
+                val bbPlayer = playerList[bbPosition]
+                val bbAmount = minOf(bb, bbPlayer.playerChips)
+                bbPlayer.playerChips -= bbAmount
+                bbPlayer.instBet = bbAmount
+                bbPlayer.totalBetAmount += bbAmount
+                bet = bb // betをBBに設定（SBを足さない）
+                Main.plugin.logger.info("[SitAndGo Debug] Player ${bbPlayer.player.name} posts BB: $bbAmount")
+                setCoin(bbPosition)
+            }
+            turnCount += 1
+            bbDifCount++
+            
+            lastRaise = 2 // 最小レイズ額は2チップ（通常のルール）
             turnCount = 0
             
             // プリフロップ
@@ -934,6 +936,13 @@ class SitAndGo(
             if (pd.playerChips == 0 && !finishOrder.contains(pd.player.uniqueId)) {
                 recordElimination(pd.player.uniqueId)
                 pd.player.sendMessage("§c§lチップがなくなりました。${finishOrder.size}位で敗退です。")
+                
+                // 脱落プレイヤーの頭とチップ表示を削除
+                val seat = pd.seat
+                for (pl in playerList) {
+                    pl.playerGUI.inv.setItem(cardPosition(seat) - 1, null) // 頭削除
+                    pl.playerGUI.inv.setItem(cardPosition(seat) + 2, null) // チップ削除
+                }
             }
         }
     }

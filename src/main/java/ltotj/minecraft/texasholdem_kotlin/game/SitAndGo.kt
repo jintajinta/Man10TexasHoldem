@@ -62,6 +62,17 @@ class SitAndGo(
         // デバッグ用Bot判定
         var isBot: Boolean = false
         var botName: String = ""
+        
+        // レーティング表示付きの頭アイテム
+        override fun getHead(): ItemStack {
+            val item = super.getHead()
+            val meta = item.itemMeta
+            if (meta != null) {
+                meta.lore(listOf(Component.text("§7Rating: §f${ratingBefore}")))
+                item.itemMeta = meta
+            }
+            return item
+        }
     }
     
     // ======== プレイヤー管理 ========

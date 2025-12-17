@@ -425,6 +425,19 @@ class SitAndGo(
                 playSoundAlPl(Sound.BLOCK_NOTE_BLOCK_PLING, 1.0F)
             }
         }
+        
+        // 停止後に倍率を表示
+        val item = RouletteDisplay.getItemForMultiplier(mult)
+        val displayItem = ItemStack(item.material)
+        val meta = displayItem.itemMeta
+        if (meta != null) {
+            meta.displayName(Component.text(item.displayName))
+            displayItem.itemMeta = meta
+        }
+        
+        for (pd in playerList) {
+            pd.playerGUI.inv.setItem(22, displayItem)
+        }
     }
     
     // ======== 順位確定 ========

@@ -360,7 +360,8 @@ class SitAndGo(
         
         val targetIndex = RouletteDisplay.getReelIndex(targetMultiplier)
         val totalSpins = 3  // 3周
-        val totalSteps = RouletteDisplay.REEL_ITEMS.size * totalSpins + targetIndex
+        // 修正: 1個ずれの修正 - targetIndexまで正確に止まるよう調整
+        val totalSteps = RouletteDisplay.REEL_ITEMS.size * totalSpins + targetIndex + 1
         
         var delay: Long
         val maxDelay = 400L  // 最終400ms（低速）

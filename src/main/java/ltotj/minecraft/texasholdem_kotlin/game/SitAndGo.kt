@@ -395,7 +395,8 @@ class SitAndGo(
         val displayItem = ItemStack(item.material)
         val meta = displayItem.itemMeta
         if (meta != null) {
-            meta.displayName(Component.text(item.displayName))
+            // ルーレット中は倍率を隠してわくわく感を演出
+            meta.displayName(Component.text("§6§l???"))
             displayItem.itemMeta = meta
         }
         

@@ -818,10 +818,28 @@ class SitAndGo(
             
             val dif = if (getActivePlayers().size == 2) 1 else 0
             
-            // SBとBBの強制ベット
-            val (sb, bb) = getCurrentBlinds()
-            Main.plugin.logger.info("[SitAndGo Debug] Round start - SB: $sb, BB: $bb, currentBlindLevel: $currentBlindLevel")
+            
+            // SB、BB、BBAの取得
+            val (sb, bb, bba) = getCurrentBlinds()
+            Main.plugin.logger.info("[SitAndGo Debug] Round start - SB: $sb, BB: $bb, BBA: $bba, currentBlindLevel: $currentBlindLevel")
             bigBlindAmount = bb
+            
+            // BBA (Big Blind Ante) 徴収 - BBポジションのみ
+            if (bba > 0) {
+                val bbPosition = (firstSeat + 1) % seatSize
+                if (!foldedList.contains(bbPosition)) {
+                    val bbPlayer = playerList[bbPosition]
+                    val anteAmount = minOf(bba, bbPlayer.playerChips)
+                    bbPlayer.playerChips -= anteAmount
+                    bbPlayer.totalBetAmount += anteAmount
+                    pot += anteAmount
+                    Main.plugin.logger.info("[SitAndGo Debug] Player ${bbPlayer.player.name} pays BBA: $anteAmount")
+                    setCoin(bbPosition)
+                    setPot()
+                }
+            }
+            
+            // SBとBBの強制ベット
             var bbCount = 0
             var bbDifCount = 0
             while (bbCount < 2) {

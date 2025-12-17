@@ -311,8 +311,8 @@ class SitAndGo(
         val (sb, bb, bba) = getCurrentBlinds()
         val nextLevelIn = getSecondsUntilNextLevel()
         
-        // スロット14: ストラクチャタイマー
-        val structureItem = ItemStack(Material.CLOCK, maxOf(1, minOf(64, nextLevelIn)))
+        // スロット14: ストラクチャタイマー（ジャングル看板）
+        val structureItem = ItemStack(Material.JUNGLE_SIGN, maxOf(1, minOf(64, nextLevelIn)))
         structureItem.itemMeta = structureItem.itemMeta?.apply {
             displayName(Component.text("§e次レベルまで §f${nextLevelIn}秒"))
             lore(listOf(

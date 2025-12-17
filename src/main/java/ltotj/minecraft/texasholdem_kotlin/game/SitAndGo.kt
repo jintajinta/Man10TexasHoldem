@@ -40,6 +40,14 @@ class SitAndGo(
     
     @Volatile var isCancelled: Boolean = false
     
+    // Configキャッシュ（テーブル作成時に1回だけ読み込み）
+    private val cachedBlindStructure: List<List<Int>>
+    
+    init {
+        // Config読み込みはテーブル作成時のみ
+        cachedBlindStructure = loadBlindStructureFromConfig()
+    }
+    
     // SitAndGo専用プレイヤーリスト（親クラスと別に管理）
     val sitAndGoPlayerList = ArrayList<SitAndGoPlayerData>()
     
@@ -265,7 +273,7 @@ class SitAndGo(
     }
     
     // ======== ブラインド管理 ========
-    fun getBlindStructure(): List<List<Int>> {
+    private fun loadBlindStructureFromConfig(): List<List<Int>> {
         val list = con.getList("sitandgo.blindStructure")
         Main.plugin.logger.info("[SitAndGo Debug] blindStructure list: ${list != null}")
         if (list == null) {
@@ -276,8 +284,12 @@ class SitAndGo(
         val result = list.mapNotNull { item ->
             (item as? List<*>)?.mapNotNull { it as? Int }
         }
-        Main.plugin.logger.info("[SitAndGo Debug] blindStructure result: $result")
+        Main.plugin.logger.info("[SitAndGo Debug] blindStructure loaded: $result")
         return result
+    }
+    
+    fun getBlindStructure(): List<List<Int>> {
+        return cachedBlindStructure // キャッシュから取得（Config読み込みなし）
     }
     
     fun getCurrentBlinds(): Triple<Int, Int, Int> {
@@ -352,6 +364,25 @@ class SitAndGo(
                 }
                 pd.playerGUI.inv.setItem(26, ratingItem)
             }
+        }
+    }
+    
+    // 軽量版: ストラクチャタイマーのみ更新（毎秒呼び出し可）
+    private fun updateStructureTimerOnly() {
+        val (sb, bb, bba) = getCurrentBlinds()
+        val nextLevelIn = getSecondsUntilNextLevel()
+        
+        val structureItem = ItemStack(Material.COMPASS, maxOf(1, minOf(64, nextLevelIn)))
+        structureItem.itemMeta = structureItem.itemMeta?.apply {
+            displayName(Component.text("§e次レベルまで §f${nextLevelIn}秒"))
+            lore(listOf(
+                Component.text("§7現在: Lv.${currentBlindLevel + 1}"),
+                Component.text("§7SB:$sb / BB:$bb / BBA:$bba")
+            ))
+        }
+        
+        for (pd in playerList) {
+            pd.playerGUI.inv.setItem(18, structureItem)
         }
     }
     
@@ -715,6 +746,9 @@ class SitAndGo(
                     "§c${secondsRemaining}" // アディショナル消費中
                 }
                 setClockFormatted(displayTime, secondsRemaining)
+                
+                // ストラクチャタイマーを毎秒更新（軽量）
+                updateStructureTimerOnly()
             }
             
             // タイムアウト

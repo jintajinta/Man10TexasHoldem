@@ -300,20 +300,14 @@ class SitAndGo(
         val (sb, bb, bba) = getCurrentBlinds()
         val nextLevelIn = getSecondsUntilNextLevel()
         
-        // スロット18: 次レベルまでの時間
-        val clockItem = ItemStack(Material.CLOCK, maxOf(1, minOf(64, nextLevelIn)))
-        clockItem.itemMeta = clockItem.itemMeta?.apply {
+        // スロット14: ストラクチャタイマー
+        val structureItem = ItemStack(Material.CLOCK, maxOf(1, minOf(64, nextLevelIn)))
+        structureItem.itemMeta = structureItem.itemMeta?.apply {
             displayName(Component.text("§e次レベルまで §f${nextLevelIn}秒"))
             lore(listOf(
                 Component.text("§7現在: Lv.${currentBlindLevel + 1}"),
                 Component.text("§7SB:$sb / BB:$bb / BBA:$bba")
             ))
-        }
-        
-        // スロット19: 現在のブラインド
-        val blindItem = ItemStack(Material.GOLD_NUGGET)
-        blindItem.itemMeta = blindItem.itemMeta?.apply {
-            displayName(Component.text("§6SB:$sb / BB:$bb / BBA:$bba"))
         }
         
         // スロット27: 倍率・賞金プール
@@ -330,8 +324,7 @@ class SitAndGo(
         
         // 全プレイヤーのGUIに反映
         for (pd in playerList) {
-            pd.playerGUI.inv.setItem(18, clockItem)
-            pd.playerGUI.inv.setItem(19, blindItem)
+            pd.playerGUI.inv.setItem(14, structureItem)
             pd.playerGUI.inv.setItem(27, prizeItem)
             
             // スロット26: 各自のレート表示

@@ -259,7 +259,7 @@ class SitAndGo(
     }
     
     fun calculatePrize(rank: Int): Long {
-        val totalPool = buyIn * 4 * multiplier
+        val totalPool = buyIn * multiplier // 正しい計算: バイイン×倍率
         val distribution = getPrizeDistribution()
         return (totalPool * (distribution[rank] ?: 0.0)).toLong()
     }
@@ -321,13 +321,13 @@ class SitAndGo(
             ))
         }
         
-        // スロット27: 倍率・賞金プール（ルーレットと同じアイテム）
+        // スロット13: 倍率・賞金プール（ルーレットと同じアイテム、コミュニティカード上）
         val rouletteItem = RouletteDisplay.getItemForMultiplier(multiplier)
         val prizeItem = ItemStack(rouletteItem.material)
         prizeItem.itemMeta = prizeItem.itemMeta?.apply {
             displayName(Component.text("§e倍率: ${rouletteItem.displayName}"))
             lore(listOf(
-                Component.text("§7賞金プール: §e${(buyIn * 4 * multiplier).toLong()}"),
+                Component.text("§7賞金プール: §e${(buyIn * multiplier).toLong()}"),
                 Component.text("§71位: §6${calculatePrize(1)}"),
                 Component.text("§72位: §f${calculatePrize(2)}"),
                 Component.text("§73位: §7${calculatePrize(3)}")
@@ -337,7 +337,7 @@ class SitAndGo(
         // 全プレイヤーのGUIに反映
         for (pd in playerList) {
             pd.playerGUI.inv.setItem(18, structureItem)
-            pd.playerGUI.inv.setItem(27, prizeItem)
+            pd.playerGUI.inv.setItem(13, prizeItem)
             
             // スロット26: 各自のレート表示
             if (pd is SitAndGoPlayerData) {
@@ -548,7 +548,7 @@ class SitAndGo(
         
         val messages = mutableListOf(
             "§4§l============ §eSit & Go Result §4§l============",
-            "§e倍率: §6§l${multiplier}x §7(賞金プール: ${(buyIn * 4 * multiplier).toLong()})",
+            "§e倍率: §6§l${multiplier}x §7(賞金プール: ${(buyIn * multiplier).toLong()})",
             ""
         )
         
@@ -846,6 +846,7 @@ class SitAndGo(
                 sbPlayer.totalBetAmount += sbAmount
                 bet = sb // betをSBに設定
                 Main.plugin.logger.info("[SitAndGo Debug] Player ${sbPlayer.player.name} posts SB: $sbAmount")
+                setChips(sbPosition, 0, sbAmount) // SBチップ表示アニメーション
                 setCoin(sbPosition)
             }
             turnCount += 1
@@ -861,6 +862,7 @@ class SitAndGo(
                 bbPlayer.totalBetAmount += bbAmount
                 bet = bb // betをBBに設定（SBを足さない）
                 Main.plugin.logger.info("[SitAndGo Debug] Player ${bbPlayer.player.name} posts BB: $bbAmount")
+                setChips(bbPosition, 0, bbAmount) // BBチップ表示アニメーション
                 setCoin(bbPosition)
             }
             turnCount += 1

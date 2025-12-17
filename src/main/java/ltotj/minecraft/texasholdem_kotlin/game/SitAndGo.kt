@@ -321,10 +321,11 @@ class SitAndGo(
             ))
         }
         
-        // スロット27: 倍率・賞金プール
-        val prizeItem = ItemStack(Material.SUNFLOWER)
+        // スロット27: 倍率・賞金プール（ルーレットと同じアイテム）
+        val rouletteItem = RouletteDisplay.getItemForMultiplier(multiplier)
+        val prizeItem = ItemStack(rouletteItem.material)
         prizeItem.itemMeta = prizeItem.itemMeta?.apply {
-            displayName(Component.text("§e倍率: §6§l${multiplier}x"))
+            displayName(Component.text("§e倍率: ${rouletteItem.displayName}"))
             lore(listOf(
                 Component.text("§7賞金プール: §e${(buyIn * 4 * multiplier).toLong()}"),
                 Component.text("§71位: §6${calculatePrize(1)}"),

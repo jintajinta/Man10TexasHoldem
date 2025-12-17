@@ -16,8 +16,10 @@ object SitAndGo_Command : CommandExecutor, TabCompleter {
     override fun onCommand(sender: CommandSender, cmd: Command, label: String, args: Array<out String>): Boolean {
         when (args.getOrNull(0)) {
             "start" -> handleStart(sender, args)
+            "open" -> handleOpen(sender)
             "join" -> handleJoin(sender, args)
             "leave" -> handleLeave(sender)
+            "stop" -> handleStop(sender, args)
             "rating" -> handleRating(sender, args)
             "top" -> handleTop(sender)
             "debug" -> handleDebug(sender, args)
@@ -165,6 +167,68 @@ object SitAndGo_Command : CommandExecutor, TabCompleter {
         sender.sendMessage("§7テーブルから離脱しました")
     }
     
+    // /sng stop [host]
+    private fun handleStop(sender: CommandSender, args: Array<out String>) {
+        if (!sender.isOp) {
+            sender.sendMessage("§cOP専用コマンドです")
+            return
+        }
+        
+        var targetHost: Player? = null
+        
+        if (args.size >= 2) {
+            // 指定したホストのゲームを停止
+            targetHost = Bukkit.getPlayer(args[1])
+            if (targetHost == null) {
+                sender.sendMessage("§cプレイヤーが見つかりません")
+                return
+            }
+        } else if (sender is Player) {
+            // 自分が参加している・主催しているゲームを停止
+            val hostUUID = Main.currentPlayers[sender.uniqueId]
+            if (hostUUID != null) {
+                targetHost = Bukkit.getPlayer(hostUUID)
+            }
+        }
+        
+        if (targetHost == null) {
+            sender.sendMessage("§c停止対象のゲームが見つかりません。/sng stop [ホスト名] で指定してください。")
+            return
+        }
+        
+        val table = Main.sitAndGoTables[targetHost.uniqueId]
+        if (table == null) {
+            sender.sendMessage("§c${targetHost.name} はSitAndGoを主催していません")
+            return
+        }
+        
+        sender.sendMessage("§c${targetHost.name} のゲームを強制終了します...")
+        table.cancelTournament()
+        Main.sitAndGoTables.remove(targetHost.uniqueId)
+    }
+    
+    // /sng open
+    private fun handleOpen(sender: CommandSender) {
+        if (sender !is Player) {
+            sender.sendMessage("§cプレイヤーのみ実行可能です")
+            return
+        }
+        
+        val masterUUID = Main.currentPlayers[sender.uniqueId]
+        if (masterUUID == null) {
+            sender.sendMessage("§cゲームに参加していません")
+            return
+        }
+        
+        val table = Main.sitAndGoTables[masterUUID]
+        if (table == null) {
+            sender.sendMessage("§c参加中のテーブルが見つかりません")
+            return
+        }
+        
+        table.openSitAndGoInv(sender)
+    }
+    
     // /sng rating [player]
     private fun handleRating(sender: CommandSender, args: Array<out String>) {
         val targetName = args.getOrNull(1) ?: if (sender is Player) sender.name else null
@@ -211,13 +275,14 @@ object SitAndGo_Command : CommandExecutor, TabCompleter {
     // /sng help
     private fun handleHelp(sender: CommandSender) {
         sender.sendMessage("§6=== Sit & Go コマンド ===")
-        sender.sendMessage("§e/sng start <金額> §7- トーナメント開始")
+        sender.sendMessage("§e/sng open <金額> §7- トーナメント作成（startも可）")
         sender.sendMessage("§e/sng join <ホスト名> §7- 参加")
         sender.sendMessage("§e/sng leave §7- 離脱（募集中のみ）")
         sender.sendMessage("§e/sng rating [プレイヤー] §7- レート確認")
         sender.sendMessage("§e/sng top §7- ランキング")
         if (sender.isOp) {
-            sender.sendMessage("§e/sng debug [倍率] §7- デバッグモード（OPのみ）")
+            sender.sendMessage("§e/sng stop [ホスト] §7- 強制終了（OP）")
+            sender.sendMessage("§e/sng debug [倍率] §7- デバッグモード（OP）")
         }
     }
     
@@ -276,8 +341,11 @@ object SitAndGo_Command : CommandExecutor, TabCompleter {
     override fun onTabComplete(sender: CommandSender, cmd: Command, label: String, args: Array<out String>): List<String> {
         return when (args.size) {
             1 -> {
-                val commands = mutableListOf("start", "join", "leave", "rating", "top", "help")
-                if (sender.isOp) commands.add("debug")
+                val commands = mutableListOf("start", "open", "join", "leave", "rating", "top", "help")
+                if (sender.isOp) {
+                    commands.add("debug")
+                    commands.add("stop")
+                }
                 commands.filter { it.startsWith(args[0], true) }
             }
             2 -> when (args[0].lowercase()) {

@@ -38,6 +38,8 @@ class SitAndGo(
     var blindLevelStartTime: Long = 0
     val finishOrder: MutableList<UUID> = mutableListOf()
     
+    @Volatile var isCancelled: Boolean = false
+    
     // SitAndGo専用プレイヤーリスト（親クラスと別に管理）
     val sitAndGoPlayerList = ArrayList<SitAndGoPlayerData>()
     
@@ -165,30 +167,75 @@ class SitAndGo(
         }
     }
     
+    // ======== インベントリを開く ========
+    fun openSitAndGoInv(player: Player) {
+        if (phase == TournamentPhase.WAITING) {
+            val pd = sitAndGoPlayerList.find { it.player.uniqueId == player.uniqueId }
+            if (pd != null) {
+                player.openInventory(pd.playerGUI.inv)
+            } else {
+                player.sendMessage("§c参加データが見つかりません")
+            }
+        } else {
+            // ゲーム開始後は親クラスのリストを使用
+            openInv(player.uniqueId)
+        }
+    }
+    
     // ======== 倍率抽選 ========
     fun pickMultiplier(): Double {
-        val section = con.getConfigurationSection("sitandgo.multiplierTable") ?: return 2.5
-        val table = section.getKeys(false).mapNotNull { key ->
-            val multiplier = key.toDoubleOrNull() ?: return@mapNotNull null
-            val probability = section.getDouble(key)
-            multiplier to probability
-        }.toMap()
+        Main.plugin.logger.info("[SitAndGo Debug] Picking multiplier using direct path method...")
+        
+        // 直接パス指定でmultiplierTableの各値を取得
+        val multipliers = listOf("2.5", "3.0", "3.5", "4.0", "5.0", "6.0", "8.0", "10.0", "15.0", "20.0")
+        val table = mutableMapOf<Double, Double>()
+        
+        for (multStr in multipliers) {
+            val probability = con.getDouble("sitandgo.multiplierTable.$multStr")
+            if (probability > 0.0) {
+                val mult = multStr.toDouble()
+                table[mult] = probability
+                Main.plugin.logger.info("[SitAndGo Debug] Found multiplier: $mult -> $probability%")
+            }
+        }
+        
+        if (table.isEmpty()) {
+            Main.plugin.logger.warning("[SitAndGo Debug] No multipliers found, using default 2.5")
+            return 2.5
+        }
+        
+        Main.plugin.logger.info("[SitAndGo Debug] Final multiplierTable: $table")
         
         val random = Random.nextDouble() * 100.0
         var cumulative = 0.0
         for ((mult, weight) in table) {
             cumulative += weight
-            if (random < cumulative) return mult
+            if (random < cumulative) {
+                Main.plugin.logger.info("[SitAndGo Debug] Selected multiplier: $mult (random: $random, cumulative: $cumulative)")
+                return mult
+            }
         }
+        Main.plugin.logger.warning("[SitAndGo Debug] No multiplier selected, using default 2.5")
         return 2.5
     }
     
     // ======== スタック計算 ========
     fun getStartingStack(): Int {
-        val section = con.getConfigurationSection("sitandgo.stackByMultiplier") ?: return 30 * 2
-        val bbAmount = section.getInt(multiplier.toString(), 30)
+        Main.plugin.logger.info("[SitAndGo Debug] Getting starting stack for multiplier: $multiplier")
+        
+        // 直接パス指定でstackByMultiplierの値を取得
+        val bbAmount = con.getInt("sitandgo.stackByMultiplier.$multiplier")
+        Main.plugin.logger.info("[SitAndGo Debug] bbAmount from config: $bbAmount")
+        
+        val actualBbAmount = if (bbAmount > 0) bbAmount else 30 // デフォルト30
+        Main.plugin.logger.info("[SitAndGo Debug] Using bbAmount: $actualBbAmount (default used: ${bbAmount <= 0})")
+        
         val blinds = getBlindStructure()[0]
-        return bbAmount * blinds[1]  // BB単位 × BB
+        Main.plugin.logger.info("[SitAndGo Debug] blinds[0]: ${blinds?.joinToString(",") ?: "null"}")
+        
+        val finalStack = actualBbAmount * (blinds?.get(1) ?: 2)
+        Main.plugin.logger.info("[SitAndGo Debug] finalStack: $finalStack ($actualBbAmount * ${blinds?.get(1) ?: 2})")
+        return finalStack
     }
     
     // ======== 賞金計算 ========
@@ -208,10 +255,18 @@ class SitAndGo(
     
     // ======== ブラインド管理 ========
     fun getBlindStructure(): List<List<Int>> {
-        val list = con.getList("sitandgo.blindStructure") ?: return listOf(listOf(1, 2, 2))
-        return list.mapNotNull { item ->
+        val list = con.getList("sitandgo.blindStructure")
+        Main.plugin.logger.info("[SitAndGo Debug] blindStructure list: ${list != null}")
+        if (list == null) {
+            Main.plugin.logger.warning("[SitAndGo Debug] blindStructure is null, using default [1,2,2]")
+            return listOf(listOf(1, 2, 2))
+        }
+        
+        val result = list.mapNotNull { item ->
             (item as? List<*>)?.mapNotNull { it as? Int }
         }
+        Main.plugin.logger.info("[SitAndGo Debug] blindStructure result: $result")
+        return result
     }
     
     fun getCurrentBlinds(): Triple<Int, Int, Int> {
@@ -224,7 +279,9 @@ class SitAndGo(
         val elapsed = System.currentTimeMillis() - blindLevelStartTime
         val levelDuration = con.getInt("sitandgo.blindLevelSeconds") * 1000L
         val newLevel = (elapsed / levelDuration).toInt()
+        
         if (newLevel > currentBlindLevel) {
+            val oldLevel = currentBlindLevel
             currentBlindLevel = minOf(newLevel, getBlindStructure().size - 1)
             return true
         }
@@ -483,58 +540,210 @@ class SitAndGo(
             Triple(rank, pd?.player?.name ?: "Unknown", calculatePrize(rank))
         }
         
-        val messages = listOf(
+        val messages = mutableListOf(
             "§4§l============ §eSit & Go Result §4§l============",
             "§e倍率: §6§l${multiplier}x §7(賞金プール: ${(buyIn * 4 * multiplier).toLong()})",
-            "",
-            "§6§l🏆 1位: ${rankData[0].second} §e+${rankData[0].third}",
-            "§f§l🥈 2位: ${rankData[1].second} §e+${rankData[1].third}",
-            "§7§l🥉 3位: ${rankData[2].second} §e+${rankData[2].third}",
-            "§8   4位: ${rankData[3].second}",
-            "",
-            if (buyIn >= con.getInt("sitandgo.ratingMinBuyIn")) "§7レート変動あり" else "§7レート変動なし",
-            "§4§l=========================================="
+            ""
         )
+        
+        if (rankData.isNotEmpty()) messages.add("§6§l🏆 1位: ${rankData[0].second} §e+${rankData[0].third}")
+        if (rankData.size > 1) messages.add("§f§l🥈 2位: ${rankData[1].second} §e+${rankData[1].third}")
+        if (rankData.size > 2) messages.add("§7§l🥉 3位: ${rankData[2].second} §e+${rankData[2].third}")
+        if (rankData.size > 3) messages.add("§8   4位: ${rankData[3].second}")
+            
+        messages.add("§4§l==========================================")
+        
         for (playerData in playerList) {
             for (msg in messages) playerData.player.sendMessage(msg)
         }
     }
     
-    // ======== Bot自動アクション ========
+    private fun setClockFormatted(displayText: String, amount: Int) {
+        val item = ItemStack(Material.CLOCK, maxOf(1, minOf(64, amount)))
+        val meta = item.itemMeta
+        meta.displayName(Component.text(displayText))
+        item.itemMeta = meta
+        setItemAlPl(18, item)
+    }
+
+    // ======== アクションタイマー（Bot対応 & タイムバンク実装） ========
     override fun actionTime(dif: Int) {
-        super.actionTime(dif)
+        turnCount += dif
         
-        // 現在のプレイヤーがBotの場合、自動アクション
-        val currentSeat = turnSeat()
-        val currentPd = playerList.getOrNull(currentSeat) as? SitAndGoPlayerData ?: return
-        if (!currentPd.isBot) return
+        // ループ条件:
+        // 1. 全員がアクション完了していない (folded < size-1)
+        // 2. ベット額が揃っていない (instBet != bet) OR まだ一巡していない (turnCount < size + dif)
+        // 3. アクティブプレイヤーが複数いる
+        // 4. キャンセルされていない
+        while (((allInList.size + foldedList.size + 1) < playerList.size || bet != 0) &&
+                foldedList.size < playerList.size - 1 &&
+                ((playerList[turnSeat()].instBet != bet) || turnCount < playerList.size + dif)
+        ) {
+            if (isCancelled) return
+
+            val currentSeat = turnSeat()
+            val currentPd = playerList[currentSeat]
+            
+            // GUI更新
+            setGUI(currentSeat)
+            
+            // プレイヤー準備
+            currentPd.preCall.set(false)
+            currentPd.player.playSound(currentPd.player.location, Sound.BLOCK_NOTE_BLOCK_BELL, 2F, 2F)
+            
+            // アクション待ち
+            if (!foldedList.contains(currentSeat) && !allInList.contains(currentSeat)) {
+                
+                // === Botの場合 ===
+                if (currentPd is SitAndGoPlayerData && currentPd.isBot) {
+                    processBotAction(currentPd)
+                } 
+                // === 人間の場合 ===
+                else {
+                    processHumanAction(currentPd)
+                }
+            }
+            
+            // ターン終了処理
+            currentPd.playerGUI.removeButton()
+            removeItem(chipPosition(currentSeat) - 3)
+            removeItem(18) // アクションタイマー削除 (18に変更)
+            setCoin(currentSeat)
+            turnCount += 1
+        }
         
-        // 0.5秒待ってからランダムアクション
-        Thread.sleep(500)
+        // ラウンド終了後のチップアニメーション
+        for (i in 0 until playerList.size) {
+            if (!foldedList.contains(i)) {
+                if (allInList.contains(i)) {
+                    setItemAlPl(chipPosition(i), createGUIItem(Material.NETHER_STAR, 1, "§e§lオールイン済み${playerList[i].totalBetAmount}枚"))
+                    Thread.sleep(500)
+                } else {
+                    removeItem(chipPosition(i))
+                    playSoundAlPl(Sound.BLOCK_GRAVEL_STEP, 2F)
+                    Thread.sleep(500)
+                }
+            }
+        }
+        
+        turnCount = 0
+        lastRaise = 2 // 最小レイズ額リセット
+        setPot()
+        resetBet()
+    }
+    
+    private fun processBotAction(bot: SitAndGoPlayerData) {
+        // 思考時間（演出）
+        Thread.sleep(1000)
         
         val random = Random.nextInt(100)
         when {
-            currentPd.playerChips <= bet - currentPd.instBet -> {
-                // オールイン
-                currentPd.call()
+            // コール額が足りないならオールイン
+            bot.playerChips <= bet - bot.instBet -> {
+                bot.call() // call内でチップ不足ならAll-inになる
             }
-            random < 30 -> {
-                // 30%でフォールド
-                currentPd.fold()
+            random < 10 && bet > bot.instBet -> { // 10%でフォールド（別途がある場合のみ）
+                bot.fold()
             }
-            random < 80 -> {
-                // 50%でコール
-                currentPd.call()
+            random < 95 -> { // 85%でコール/チェック (10+85=95)
+                bot.call()
             }
-            else -> {
-                // 20%でオールイン
-                currentPd.allIn()
+            else -> { // 5%でオールイン
+                bot.allIn()
             }
         }
     }
     
+    private fun processHumanAction(playerData: ltotj.minecraft.texasholdem_kotlin.game.TexasHoldem.PlayerData) {
+        val sngPlayer = playerData as? SitAndGoPlayerData
+        
+        // タイムバンク計算
+        // デフォルト: 15s (AFKで減少)
+        // アディショナル: Max 15s (+5s/turn)
+        var defaultTime = 30 // Fallback
+        var additionalTime = 0
+        
+        if (sngPlayer != null) {
+            // アディショナル追加 (+5秒, 最大15秒)
+            sngPlayer.additionalTimeRemaining = minOf(15, sngPlayer.additionalTimeRemaining + 5)
+            // デフォルト時間計算 (15 - afk*5)
+            sngPlayer.defaultTimeRemaining = maxOf(0, 15 - (sngPlayer.afkCount * 5))
+            
+            defaultTime = sngPlayer.defaultTimeRemaining
+            additionalTime = sngPlayer.additionalTimeRemaining
+        }
+        
+        val totalTime = defaultTime + additionalTime
+        val tickRate = 20 // 1秒あたりのtick数
+        val loopCount = totalTime * tickRate
+        
+        // カウントダウンループ
+        for (i in loopCount downTo 0) {
+            if (isCancelled) return
+
+            Thread.sleep(50) // 1tick = 50ms
+            
+            // 秒数更新表示
+            if (i % 20 == 0) {
+                val secondsRemaining = i / 20
+                playSoundAlPl(Sound.BLOCK_STONE_BUTTON_CLICK_ON, 2F)
+                
+                // タイムバンク表示分け
+                val displayTime = if (secondsRemaining > additionalTime) {
+                    "§a${secondsRemaining - additionalTime} §e+${additionalTime}"
+                } else {
+                    "§c${secondsRemaining}" // アディショナル消費中
+                }
+                setClockFormatted(displayTime, secondsRemaining)
+                
+                // --- ストラクチャタイマーの更新 (毎秒) ---
+                val (sb, bb, bba) = getCurrentBlinds()
+                val nextLevelIn = getSecondsUntilNextLevel()
+                for(pd in playerList) {
+                   updateBlindInfoGUI() // 簡易更新
+                }
+            }
+            
+            // タイムアウト
+            if (i == 0) {
+                playerData.addedChips = 0
+                playerData.fold()
+                if (sngPlayer != null) {
+                    sngPlayer.afkCount++ // 放置カウント増加
+                    sngPlayer.player.sendMessage("§cタイムアウトしました (放置回数: ${sngPlayer.afkCount})")
+                }
+                break
+            }
+            
+            // アクション実行確認
+            if (playerData.action) {
+                if (sngPlayer != null) {
+                    sngPlayer.afkCount = 0 // 放置リセット
+                    
+                    // アディショナル残り時間を保存
+                    val timeConsumed = totalTime - (i / 20)
+                    if (timeConsumed > defaultTime) {
+                        // アディショナル消費
+                        val additionalConsumed = timeConsumed - defaultTime
+                        sngPlayer.additionalTimeRemaining = maxOf(0, sngPlayer.additionalTimeRemaining - additionalConsumed)
+                    }
+                }
+                break
+            }
+            
+            // プリコール処理
+            if (playerData.preCall.get()) {
+                playerData.preCall.set(false)
+                playerData.call()
+            }
+        }
+        
+        playerData.action = false // フラグリセット
+    }
+    
     // ======== run()メソッド（トーナメント専用） ========
     override fun run() {
+        isCancelled = false // フラグリセット
         // 4人揃っていることを確認
         if (playerList.size < 4) {
             for (pd in playerList) {
@@ -556,6 +765,7 @@ class SitAndGo(
         
         // ブラインドタイマー開始
         blindLevelStartTime = System.currentTimeMillis()
+        currentBlindLevel = 0 // 初期化
         
         // GUI更新
         updateBlindInfoGUI()
@@ -567,9 +777,12 @@ class SitAndGo(
         val seatSize = playerList.size
         
         // トーナメントゲームループ（残り1人になるまで続ける）
-        while (getActivePlayers().size > 1) {
+        while (getActivePlayers().size > 1 && !isCancelled) {
             // ブラインドレベルチェック
-            checkAndUpdateBlindLevel()
+            val levelChanged = checkAndUpdateBlindLevel()
+            if (levelChanged) {
+                Main.plugin.logger.info("[SitAndGo Debug] Blind level increased to: $currentBlindLevel")
+            }
             updateBlindInfoGUI()
             
             // ラウンドリセット
@@ -601,13 +814,16 @@ class SitAndGo(
             
             // SBとBBの強制ベット
             val (sb, bb) = getCurrentBlinds()
+            Main.plugin.logger.info("[SitAndGo Debug] Round start - SB: $sb, BB: $bb, currentBlindLevel: $currentBlindLevel")
             bigBlindAmount = bb
             var bbCount = 0
             var bbDifCount = 0
             while (bbCount < 2) {
                 val currentPlayer = playerList[turnSeat()]
                 if (!foldedList.contains(turnSeat())) {
-                    currentPlayer.addedChips = if (bbCount == 0) sb else bb
+                    val betAmount = if (bbCount == 0) sb else bb
+                    currentPlayer.addedChips = betAmount
+                    Main.plugin.logger.info("[SitAndGo Debug] Player ${currentPlayer.player.name} posting ${if (bbCount == 0) "SB" else "BB"}: $betAmount")
                     if (currentPlayer.call()) {
                         setCoin(turnSeat())
                         currentPlayer.action = false
@@ -693,10 +909,25 @@ class SitAndGo(
     
     // トーナメントキャンセル
     fun cancelTournament() {
+        isCancelled = true // ループ停止
+        isRunning = false
+        
         for (pd in playerList) {
             vault.deposit(pd.player.uniqueId, buyIn.toDouble())
             pd.player.sendMessage("§e§lトーナメントがキャンセルされました。参加費を返金しました。")
             ltotj.minecraft.texasholdem_kotlin.Main.currentPlayers.remove(pd.player.uniqueId)
+        }
+        
+        // WAITING中のプレイヤーも処理
+        if (phase == TournamentPhase.WAITING) {
+            for (pd in sitAndGoPlayerList) {
+                // playerListに含まれていない場合のみ返金
+                if (!playerList.any { it.player.uniqueId == pd.player.uniqueId }) {
+                    vault.deposit(pd.player.uniqueId, buyIn.toDouble())
+                    pd.player.sendMessage("§e§lトーナメントがキャンセルされました。参加費を返金しました。")
+                    ltotj.minecraft.texasholdem_kotlin.Main.currentPlayers.remove(pd.player.uniqueId)
+                }
+            }
         }
     }
 }

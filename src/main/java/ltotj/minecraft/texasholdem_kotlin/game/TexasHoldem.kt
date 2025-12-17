@@ -575,7 +575,7 @@ open class TexasHoldem:Thread{
         }
     }
 
-    private fun setItemAlPl(slot: Int, item: ItemStack){
+    protected fun setItemAlPl(slot: Int, item: ItemStack){
         for(playerData in playerList)playerData.playerGUI.inv.setItem(slot, item)
     }
 

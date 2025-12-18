@@ -919,61 +919,57 @@ class SitAndGo(
             
             val dif = if (getActivePlayers().size == 2) 1 else 0
             
-            
             // SB、BB、BBAの取得
             val (sb, bb, bba) = getCurrentBlinds()
             Main.plugin.logger.info("[SitAndGo Debug] Round start - SB: $sb, BB: $bb, BBA: $bba, currentBlindLevel: $currentBlindLevel")
             bigBlindAmount = bb
             
-            // SBとBBの強制ベット（直接処理）
-            bet = 0 // ベットをリセット
+            // ======== 正しいポーカールール: SB/BB強制ベット ========
+            // TexasHoldemの実装をベースに、foldedList（脱落席）スキップを追加
+            
+            var bbCount = 0
             var bbDifCount = 0
+            bet = 0
             
-            // SBポスト
-            val sbPosition = turnSeat()
-            if (!foldedList.contains(sbPosition)) {
-                val sbPlayer = playerList[sbPosition]
-                val sbAmount = minOf(sb, sbPlayer.playerChips)
-                sbPlayer.playerChips -= sbAmount
-                sbPlayer.instBet = sbAmount
-                sbPlayer.totalBetAmount += sbAmount
-                bet = sb // betをSBに設定
-                Main.plugin.logger.info("[SitAndGo Debug] Player ${sbPlayer.player.name} posts SB: $sbAmount")
-                setChips(sbPosition, 0, sbAmount) // SBチップ表示アニメーション
-                setCoin(sbPosition)
+            // SB/BBを2人から徴収（脱落席はスキップ）
+            while (bbCount < 2 && bbDifCount < seatSize * 2) {  // 無限ループ防止
+                val currentSeat = turnSeat()
+                
+                // 脱落席はスキップ
+                if (!foldedList.contains(currentSeat)) {
+                    val currentPlayer = playerList[currentSeat]
+                    val betAmount = if (bbCount == 0) sb else bb
+                    
+                    currentPlayer.addedChips = betAmount
+                    Main.plugin.logger.info("[SitAndGo Debug] Player ${currentPlayer.player.name} (seat $currentSeat) posting ${if (bbCount == 0) "SB" else "BB"}: $betAmount")
+                    
+                    if (currentPlayer.call()) {
+                        setCoin(currentSeat)
+                        currentPlayer.action = false
+                        bbCount++
+                    }
+                }
+                
+                turnCount += 1
+                bbDifCount++
             }
-            turnCount += 1
-            bbDifCount++
-            
-            // BBポスト
-            val bbPosition = turnSeat()
-            if (!foldedList.contains(bbPosition)) {
-                val bbPlayer = playerList[bbPosition]
-                val bbAmount = minOf(bb, bbPlayer.playerChips)
-                bbPlayer.playerChips -= bbAmount
-                bbPlayer.instBet = bbAmount
-                bbPlayer.totalBetAmount += bbAmount
-                bet = bb // betをBBに設定（SBを足さない）
-                Main.plugin.logger.info("[SitAndGo Debug] Player ${bbPlayer.player.name} posts BB: $bbAmount")
-                setChips(bbPosition, 0, bbAmount) // BBチップ表示アニメーション
-                setCoin(bbPosition)
-            }
-            turnCount += 1
-            bbDifCount++
             
             // BBA (Big Blind Ante) 徴収 - BB優先、余りをアンティに
-            if (bba > 0) {
-                val bbaPosition = (firstSeat + 1) % seatSize
-                if (!foldedList.contains(bbaPosition)) {
-                    val bbaPlayer = playerList[bbaPosition]
+            // BB位置 = firstSeat + bbDifCount - 1（最後に払った人）
+            if (bba > 0  && bbCount >= 2) {
+                // BBを払った席を特定（turnCountから逆算）
+                val bbSeat = ((firstSeat + bbDifCount - 1) % seatSize + seatSize) % seatSize
+                
+                if (!foldedList.contains(bbSeat)) {
+                    val bbPlayer = playerList[bbSeat]
                     // BB支払い後の残りチップでBBAを払う
-                    val anteAmount = minOf(bba, bbaPlayer.playerChips)
+                    val anteAmount = minOf(bba, bbPlayer.playerChips)
                     if (anteAmount > 0) {
-                        bbaPlayer.playerChips -= anteAmount
-                        bbaPlayer.totalBetAmount += anteAmount
+                        bbPlayer.playerChips -= anteAmount
+                        bbPlayer.totalBetAmount += anteAmount
                         pot += anteAmount
-                        Main.plugin.logger.info("[SitAndGo Debug] Player ${bbaPlayer.player.name} pays BBA: $anteAmount (after BB)")
-                        setCoin(bbaPosition)
+                        Main.plugin.logger.info("[SitAndGo Debug] Player ${bbPlayer.player.name} pays BBA: $anteAmount (after BB)")
+                        setCoin(bbSeat)
                         setPot()
                     }
                 }

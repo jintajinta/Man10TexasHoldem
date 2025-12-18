@@ -564,6 +564,8 @@ class SitAndGo(
         for (pd in playerList) {
             if (pd is SitAndGoPlayerData && !pd.isBot) {
                 Main.currentPlayers.remove(pd.player.uniqueId)
+                // GUI自動クローズ
+                pd.player.closeInventory()
             }
         }
         

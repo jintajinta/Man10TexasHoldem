@@ -895,6 +895,9 @@ class SitAndGo(
             // ラウンドリセット
             reset()
             
+            // pot を0にリセット（アンティのみを表示するため）
+            pot = 0
+            
             // 既に脱落したプレイヤーをfoldedListに追加
             for (i in 0 until seatSize) {
                 if (playerList[i].playerChips == 0 && !foldedList.contains(i)) {

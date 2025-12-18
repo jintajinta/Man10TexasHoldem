@@ -992,6 +992,10 @@ class SitAndGo(
                 bbDifCount++
             }
             
+            // BBA徴収前にpotを0に強制リセット
+            // SB/BB処理で意図せずpotが増えている可能性を排除し、プリフロップはアンティのみにする
+            pot = 0
+            
             // BBA (Big Blind Ante) 徴収 - BBポジションのみ、BB優先・余りをアンティに
             Main.plugin.logger.info("[SitAndGo Debug] BBA check: bba=$bba, bbSeat=$bbSeat, sb=$sb, bb=$bb")
             if (bba > 0 && bbSeat >= 0) {

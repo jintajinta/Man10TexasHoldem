@@ -1004,7 +1004,10 @@ class SitAndGo(
                 }
             }
             
-            lastRaise = bb * 2  // プリフロのミニマムレイズは2BB
+            // ミニマムレイズの差分を設定（正しいポーカールール）
+            // プリフロップ: BBがベースなので、差分 = bb (BB - 0 の差分)
+            // ミニマムレイズ = bb + bb = 2BB （正しい）
+            lastRaise = bb
             turnCount = 0
             
             // プリフロップ

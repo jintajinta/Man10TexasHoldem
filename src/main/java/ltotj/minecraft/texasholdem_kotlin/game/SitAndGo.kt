@@ -71,6 +71,12 @@ class SitAndGo(
         // デバッグ用Bot判定
         var isBot: Boolean = false
         var botName: String = ""
+        var botUuid: UUID? = null  // Bot用のユニークUUID
+        
+        // ユニークなUUIDを取得（Bot対応）
+        fun getUniqueId(): UUID {
+            return if (isBot && botUuid != null) botUuid!! else player.uniqueId
+        }
         
         // レーティング表示付きの頭アイテム
         override fun getHead(): ItemStack {
@@ -197,11 +203,15 @@ class SitAndGo(
             val playerData = SitAndGoPlayerData(botPlayer, seat)
             playerData.isBot = true
             playerData.botName = "Bot$i"
+            // Bot用にユニークなUUIDを生成（結果表示・レート計算用）
+            playerData.botUuid = java.util.UUID.randomUUID()
             
             // デフォルトレート
             playerData.ratingBefore = 2500
             
             sitAndGoPlayerList.add(playerData)
+            // BotもseatMapに登録（ユニークUUID使用）
+            seatMap[playerData.getUniqueId()] = seat
             
             // 全プレイヤーのGUIを更新
             for (pd in sitAndGoPlayerList.filter { !it.isBot }) {
@@ -522,8 +532,10 @@ class SitAndGo(
         
         // 勝者（finishOrderに含まれていないプレイヤー = 1位）を追加
         for (pd in playerList) {
-            if (!finishOrder.contains(pd.player.uniqueId)) {
-                finishOrder.add(pd.player.uniqueId)
+            if (pd is SitAndGoPlayerData) {
+                if (!finishOrder.contains(pd.getUniqueId())) {
+                    finishOrder.add(pd.getUniqueId())
+                }
             }
         }
         
@@ -547,9 +559,11 @@ class SitAndGo(
         // 結果表示（チャット）
         sendTournamentResult(rankings)
         
-        // プレイヤー登録解除
+        // プレイヤー登録解除（Botは登録されていない）
         for (pd in playerList) {
-            Main.currentPlayers.remove(pd.player.uniqueId)
+            if (pd is SitAndGoPlayerData && !pd.isBot) {
+                Main.currentPlayers.remove(pd.player.uniqueId)
+            }
         }
         
         // テーブル削除
@@ -1032,15 +1046,20 @@ class SitAndGo(
     // 脱落チェック
     fun checkEliminations() {
         for (pd in playerList) {
-            if (pd.playerChips == 0 && !finishOrder.contains(pd.player.uniqueId)) {
-                recordElimination(pd.player.uniqueId)
-                pd.player.sendMessage("§c§lチップがなくなりました。${finishOrder.size}位で敗退です。")
-                
-                // 脱落プレイヤーの頭とチップ表示を削除
-                val seat = pd.seat
-                for (pl in playerList) {
-                    pl.playerGUI.inv.setItem(cardPosition(seat) - 1, null) // 頭削除
-                    pl.playerGUI.inv.setItem(cardPosition(seat) + 2, null) // チップ削除
+            if (pd is SitAndGoPlayerData) {
+                if (pd.playerChips == 0 && !finishOrder.contains(pd.getUniqueId())) {
+                    recordElimination(pd.getUniqueId())
+                    
+                    if (!pd.isBot) {
+                        pd.player.sendMessage("§c§lチップがなくなりました。${finishOrder.size}位で敗退です。")
+                        
+                        // 脱落プレイヤーの頭とチップ表示を削除
+                        val seat = pd.seat
+                        for (pl in playerList) {
+                            pl.playerGUI.inv.setItem(cardPosition(seat) - 1, null) // 頭削除
+                            pl.playerGUI.inv.setItem(cardPosition(seat) + 2, null) // チップ削除
+                        }
+                    }
                 }
             }
         }

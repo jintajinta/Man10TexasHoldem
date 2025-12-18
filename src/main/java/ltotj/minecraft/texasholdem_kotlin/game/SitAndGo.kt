@@ -931,7 +931,7 @@ class SitAndGo(
             turnCount += 1
             bbDifCount++
             
-            lastRaise = 2 // 最小レイズ額は2チップ（通常のルール）
+            lastRaise = bb * 2  // プリフロのミニマムレイズは2BB
             turnCount = 0
             
             // プリフロップ

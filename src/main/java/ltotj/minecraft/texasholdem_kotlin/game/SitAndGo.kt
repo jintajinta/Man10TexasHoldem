@@ -1095,25 +1095,42 @@ class SitAndGo(
     }
     
     // 脱落チェック
+    // 同時脱落時: チップ少ない方が低順位、同チップならポジション悪い方（BTNから遠い）が良い順位
     fun checkEliminations() {
-        for (pd in playerList) {
-            if (pd is SitAndGoPlayerData) {
-                if (pd.playerChips == 0 && !finishOrder.contains(pd.getUniqueId())) {
-                    recordElimination(pd.getUniqueId())
-                    
-                    // 順位を正しく計算（1人目脱落=4位、2人目=3位、3人目=2位）
-                    val rank = 5 - finishOrder.size
-                    
-                    if (!pd.isBot) {
-                        pd.player.sendMessage("§c§lチップがなくなりました。${rank}位で敗退です。")
-                        
-                        // 脱落プレイヤーの頭とチップ表示を削除
-                        val seat = pd.seat
-                        for (pl in playerList) {
-                            pl.playerGUI.inv.setItem(cardPosition(seat) - 1, null) // 頭削除
-                            pl.playerGUI.inv.setItem(cardPosition(seat) + 2, null) // チップ削除
-                        }
-                    }
+        // 新たに脱落したプレイヤーをリストアップ
+        val newlyEliminated = playerList
+            .filterIsInstance<SitAndGoPlayerData>()
+            .filter { it.playerChips == 0 && !finishOrder.contains(it.getUniqueId()) }
+        
+        if (newlyEliminated.isEmpty()) return
+        
+        // ソート: 
+        // 1. チップが多い順（=先に脱落登録=低順位）→ チップ少ない方が後に登録=高順位...
+        // いや逆。finishOrder.add()の順番が脱落順。先に追加=先に脱落=低順位。
+        // なので「先に追加したい = 低順位にしたい = チップが少ない」
+        // → チップ昇順でソート（少ないものが先に追加される=低順位）
+        // 2. チップ同じ場合: ポジション良い方（BTNに近い）が先に追加=低順位
+        //    → ポジション悪い方（BTNから遠い）が後に追加=高順位
+        //    → BTNからの距離降順（遠いものが後）
+        val sorted = newlyEliminated.sortedWith(
+            compareBy<SitAndGoPlayerData> { it.playerChips }  // チップ昇順（少ない=先に追加=低順位）
+                .thenByDescending { (it.seat - firstSeat + seatSize) % seatSize }  // BTN距離降順（遠い=後に追加=高順位）
+        )
+        
+        for (pd in sorted) {
+            recordElimination(pd.getUniqueId())
+            
+            // 順位を正しく計算（1人目脱落=4位、2人目=3位、3人目=2位）
+            val rank = 5 - finishOrder.size
+            
+            if (!pd.isBot) {
+                pd.player.sendMessage("§c§lチップがなくなりました。${rank}位で敗退です。")
+                
+                // 脱落プレイヤーの頭とチップ表示を削除
+                val seat = pd.seat
+                for (pl in playerList) {
+                    pl.playerGUI.inv.setItem(cardPosition(seat) - 1, null) // 頭削除
+                    pl.playerGUI.inv.setItem(cardPosition(seat) + 2, null) // チップ削除
                 }
             }
         }

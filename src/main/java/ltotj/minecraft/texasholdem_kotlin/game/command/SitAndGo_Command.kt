@@ -282,61 +282,62 @@ object SitAndGo_Command : CommandExecutor, TabCompleter {
         sender.sendMessage("§e/sng top §7- ランキング")
         if (sender.isOp) {
             sender.sendMessage("§e/sng stop [ホスト] §7- 強制終了（OP）")
-            sender.sendMessage("§e/sng debug [倍率] §7- デバッグモード（OP）")
+            sender.sendMessage("§e/sng debug [倍率] [バイイン] §7- デバッグモード（OP）")
         }
     }
     
-    // /sng debug [multiplier]
-    private fun handleDebug(sender: CommandSender, args: Array<out String>) {
-        if (sender !is Player) {
-            sender.sendMessage("§cプレイヤーのみ実行可能です")
-            return
-        }
-        
-        if (!sender.isOp) {
-            sender.sendMessage("§cこのコマンドはOP専用です")
-            return
-        }
-        
-        // 既にテーブルに参加している場合
-        if (Main.currentPlayers.containsKey(sender.uniqueId)) {
-            sender.sendMessage("§c既にゲームに参加しています")
-            return
-        }
-        
-        val buyIn = 1000L  // デバッグ用は固定バイイン
-        
-        // 所持金チェック
-        if (Main.vault.getBalance(sender.uniqueId) < buyIn) {
-            sender.sendMessage("§c所持金が不足しています（必要: ${buyIn}）")
-            return
-        }
-        
-        // バイイン徴収
-        Main.vault.withdraw(sender.uniqueId, buyIn.toDouble())
-        
-        // テーブル作成
-        val table = SitAndGo(sender, buyIn)
-        Main.sitAndGoTables[sender.uniqueId] = table
-        
-        // 倍率指定（省略時はランダム）
-        val multiplier = args.getOrNull(1)?.toDoubleOrNull()
-        if (multiplier != null) {
-            table.multiplier = multiplier
-            sender.sendMessage("§aデバッグモード: 倍率 ${multiplier}x で開始")
-        } else {
-            sender.sendMessage("§aデバッグモード: ランダム倍率で開始")
-        }
-        
-        // ホスト自身を参加させる
-        table.addSitAndGoPlayer(sender)
-        
-        // ダミープレイヤー3人追加
-        table.addDebugBots(3)
-        
-        sender.sendMessage("§7ダミープレイヤー3人を追加しました")
-        sender.sendMessage("§7バイイン: §e${buyIn}")
+    // /sng debug [multiplier] [buyIn]
+private fun handleDebug(sender: CommandSender, args: Array<out String>) {
+    if (sender !is Player) {
+        sender.sendMessage("§cプレイヤーのみ実行可能です")
+        return
     }
+    
+    if (!sender.isOp) {
+        sender.sendMessage("§cこのコマンドはOP専用です")
+        return
+    }
+    
+    // 既にテーブルに参加している場合
+    if (Main.currentPlayers.containsKey(sender.uniqueId)) {
+        sender.sendMessage("§c既にゲームに参加しています")
+        return
+    }
+    
+    // バイイン指定（デフォルトは1000）
+    val buyIn = args.getOrNull(2)?.toLongOrNull() ?: 1000L
+    
+    // 所持金チェック
+    if (Main.vault.getBalance(sender.uniqueId) < buyIn) {
+        sender.sendMessage("§c所持金が不足しています（必要: ${buyIn}）")
+        return
+    }
+    
+    // バイイン徴収
+    Main.vault.withdraw(sender.uniqueId, buyIn.toDouble())
+    
+    // テーブル作成
+    val table = SitAndGo(sender, buyIn)
+    Main.sitAndGoTables[sender.uniqueId] = table
+    
+    // 倍率指定（省略時はランダム）
+    val multiplier = args.getOrNull(1)?.toDoubleOrNull()
+    if (multiplier != null) {
+        table.multiplier = multiplier
+        sender.sendMessage("§aデバッグモード: 倍率 ${multiplier}x, バイイン ${buyIn}円")
+    } else {
+        sender.sendMessage("§aデバッグモード: ランダム倍率, バイイン ${buyIn}円")
+    }
+    
+    // ホスト自身を参加させる
+    table.addSitAndGoPlayer(sender)
+    
+    // ダミープレイヤー3人追加
+    table.addDebugBots(3)
+    
+    sender.sendMessage("§7ダミープレイヤー3人を追加しました")
+    sender.sendMessage("§7使用方法: /sng debug [倍率] [バイイン（円）]")
+}    }
     
     override fun onTabComplete(sender: CommandSender, cmd: Command, label: String, args: Array<out String>): List<String> {
         return when (args.size) {

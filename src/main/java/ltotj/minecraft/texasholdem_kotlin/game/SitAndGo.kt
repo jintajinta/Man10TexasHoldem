@@ -596,54 +596,59 @@ class SitAndGo(
     }
     
     fun saveTournamentLog(rankings: List<Pair<UUID, Int>>) {
-        val mysql = MySQLManager(ltotj.minecraft.texasholdem_kotlin.Main.plugin, "SitAndGo_Log")
-        
-        // 順位順にソート
-        val sortedRankings = rankings.sortedBy { it.second }
-        
-        // 各順位のプレイヤーデータを取得
-        val playerDataList = sortedRankings.map { (uuid, rank) ->
-            val pd = playerList.find { it.player.uniqueId == uuid }
-            val sitAndGoPd = pd as? SitAndGoPlayerData
-            mapOf(
-                "uuid" to uuid.toString(),
-                "name" to (pd?.player?.name ?: "Unknown"),
-                "prize" to calculatePrize(rank),
-                "ratingBefore" to (sitAndGoPd?.ratingBefore ?: 0),
-                "ratingAfter" to (sitAndGoPd?.ratingAfter ?: 0)
-            )
-        }
-        
-        // 4人分のデータがあることを確認
-        if (playerDataList.size < 4) return
-        
-        val p1 = playerDataList[0]
-        val p2 = playerDataList[1]
-        val p3 = playerDataList[2]
-        val p4 = playerDataList[3]
-        
-        val query = """
-            INSERT INTO sitandgo_log (
-                tournament_time, buy_in, multiplier, total_pool,
-                p1_uuid, p1_name, p1_prize, p1_rating_before, p1_rating_after,
-                p2_uuid, p2_name, p2_prize, p2_rating_before, p2_rating_after,
-                p3_uuid, p3_name, p3_prize, p3_rating_before, p3_rating_after,
-                p4_uuid, p4_name, p4_prize, p4_rating_before, p4_rating_after
-            ) VALUES (
-                NOW(), $buyIn, $multiplier, ${(buyIn * 4 * multiplier).toLong()},
-                '${p1["uuid"]}', '${p1["name"]}', ${p1["prize"]}, ${p1["ratingBefore"]}, ${p1["ratingAfter"]},
-                '${p2["uuid"]}', '${p2["name"]}', ${p2["prize"]}, ${p2["ratingBefore"]}, ${p2["ratingAfter"]},
-                '${p3["uuid"]}', '${p3["name"]}', ${p3["prize"]}, ${p3["ratingBefore"]}, ${p3["ratingAfter"]},
-                '${p4["uuid"]}', '${p4["name"]}', ${p4["prize"]}, ${p4["ratingBefore"]}, ${p4["ratingAfter"]}
-            )
-        """.trimIndent()
-        
-        try {
-            mysql.execute(query)
-        } catch (e: Exception) {
-            ltotj.minecraft.texasholdem_kotlin.Main.plugin.logger.warning("Failed to save tournament log: ${e.message}")
-        }
+    val mysql = MySQLManager(ltotj.minecraft.texasholdem_kotlin.Main.plugin, "SitAndGo_Log")
+    
+    // 順位順にソート
+    val sortedRankings = rankings.sortedBy { it.second }
+    
+    // 各順位のプレイヤーデータを取得
+    val playerDataList = sortedRankings.map { (uuid, rank) ->
+        val pd = playerList.find { it.player.uniqueId == uuid }
+        val sitAndGoPd = pd as? SitAndGoPlayerData
+        mapOf(
+            "uuid" to uuid.toString(),
+            "name" to (pd?.player?.name ?: "Unknown"),
+            "rank" to rank,
+            "prize" to calculatePrize(rank),
+            "ratingBefore" to (sitAndGoPd?.ratingBefore ?: 0),
+            "ratingAfter" to (sitAndGoPd?.ratingAfter ?: 0)
+        )
     }
+    
+    // 4人分のデータがあることを確認
+    if (playerDataList.size < 4) return
+    
+    val p1 = playerDataList[0]
+    val p2 = playerDataList[1]
+    val p3 = playerDataList[2]
+    val p4 = playerDataList[3]
+    
+    val query = """
+        INSERT INTO sitandgo_log (
+            start_time, buy_in, multiplier, total_prize,
+            p1_uuid, p1_name, p1_rank, p1_prize, p1_rating_before, p1_rating_after,
+            p2_uuid, p2_name, p2_rank, p2_prize, p2_rating_before, p2_rating_after,
+            p3_uuid, p3_name, p3_rank, p3_prize, p3_rating_before, p3_rating_after,
+            p4_uuid, p4_name, p4_rank, p4_prize, p4_rating_before, p4_rating_after
+        ) VALUES (
+            NOW(), $buyIn, $multiplier, ${(buyIn * multiplier).toLong()},
+            '${p1["uuid"]}', '${p1["name"]}', ${p1["rank"]}, ${p1["prize"]}, ${p1["ratingBefore"]}, ${p1["ratingAfter"]},
+            '${p2["uuid"]}', '${p2["name"]}', ${p2["rank"]}, ${p2["prize"]}, ${p2["ratingBefore"]}, ${p2["ratingAfter"]},
+            '${p3["uuid"]}', '${p3["name"]}', ${p3["rank"]}, ${p3["prize"]}, ${p3["ratingBefore"]}, ${p3["ratingAfter"]},
+            '${p4["uuid"]}', '${p4["name"]}', ${p4["rank"]}, ${p4["prize"]}, ${p4["ratingBefore"]}, ${p4["ratingAfter"]}
+        )
+    """.trimIndent()
+    
+    Main.plugin.logger.info("[SitAndGo Debug] Saving log: $query")
+    
+    try {
+        mysql.execute(query)
+        Main.plugin.logger.info("[SitAndGo] Tournament log saved successfully")
+    } catch (e: Exception) {
+        Main.plugin.logger.warning("Failed to save tournament log: ${e.message}")
+        e.printStackTrace()
+    }
+}
     
     fun sendTournamentResult(rankings: List<Pair<UUID, Int>>) {
         val rankData = rankings.sortedBy { it.second }.map { (uuid, rank) ->

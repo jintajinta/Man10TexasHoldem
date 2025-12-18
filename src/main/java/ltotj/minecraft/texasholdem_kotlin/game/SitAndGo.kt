@@ -880,21 +880,6 @@ class SitAndGo(
             Main.plugin.logger.info("[SitAndGo Debug] Round start - SB: $sb, BB: $bb, BBA: $bba, currentBlindLevel: $currentBlindLevel")
             bigBlindAmount = bb
             
-            // BBA (Big Blind Ante) 徴収 - BBポジションから
-            if (bba > 0) {
-                val bbPosition = (firstSeat + 1) % seatSize
-                if (!foldedList.contains(bbPosition)) {
-                    val bbPlayer = playerList[bbPosition]
-                    val anteAmount = minOf(bba, bbPlayer.playerChips)
-                    bbPlayer.playerChips -= anteAmount
-                    bbPlayer.totalBetAmount += anteAmount
-                    pot += anteAmount
-                    Main.plugin.logger.info("[SitAndGo Debug] Player ${bbPlayer.player.name} pays BBA: $anteAmount")
-                    setCoin(bbPosition)
-                    setPot()
-                }
-            }
-            
             // SBとBBの強制ベット（直接処理）
             bet = 0 // ベットをリセット
             var bbDifCount = 0
@@ -930,6 +915,24 @@ class SitAndGo(
             }
             turnCount += 1
             bbDifCount++
+            
+            // BBA (Big Blind Ante) 徴収 - BB優先、余りをアンティに
+            if (bba > 0) {
+                val bbaPosition = (firstSeat + 1) % seatSize
+                if (!foldedList.contains(bbaPosition)) {
+                    val bbaPlayer = playerList[bbaPosition]
+                    // BB支払い後の残りチップでBBAを払う
+                    val anteAmount = minOf(bba, bbaPlayer.playerChips)
+                    if (anteAmount > 0) {
+                        bbaPlayer.playerChips -= anteAmount
+                        bbaPlayer.totalBetAmount += anteAmount
+                        pot += anteAmount
+                        Main.plugin.logger.info("[SitAndGo Debug] Player ${bbaPlayer.player.name} pays BBA: $anteAmount (after BB)")
+                        setCoin(bbaPosition)
+                        setPot()
+                    }
+                }
+            }
             
             lastRaise = bb * 2  // プリフロのミニマムレイズは2BB
             turnCount = 0

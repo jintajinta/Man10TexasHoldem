@@ -37,6 +37,7 @@ class SitAndGo(
     var currentBlindLevel: Int = 0
     var blindLevelStartTime: Long = 0
     val finishOrder: MutableList<UUID> = mutableListOf()
+    var recruitmentStartTime: Long = 0  // 募集開始時刻
     
     @Volatile var isCancelled: Boolean = false
     
@@ -102,6 +103,12 @@ class SitAndGo(
         // Main.currentPlayersに登録
         Main.currentPlayers[player.uniqueId] = masterPlayer.uniqueId
         
+        // 最初の参加者で募集タイマー開始
+        if (sitAndGoPlayerList.size == 1) {
+            recruitmentStartTime = System.currentTimeMillis()
+            startRecruitmentTimer()
+        }
+        
         // GUIを開く
         player.openInventory(playerData.playerGUI.inv)
         
@@ -163,6 +170,22 @@ class SitAndGo(
     }
     
     fun getPlayerCount(): Int = sitAndGoPlayerList.size
+    
+    // ======== 募集タイマー ========
+    private fun startRecruitmentTimer() {
+        val waitSeconds = con.getInt("sitandgo.waitTimeSeconds")
+        
+        org.bukkit.Bukkit.getScheduler().runTaskLater(Main.plugin, Runnable {
+            // タイムアウト時に4人揃っていなければ解散
+            if (phase == TournamentPhase.WAITING && sitAndGoPlayerList.size < 4) {
+                Main.plugin.logger.info("[SitAndGo] Recruitment timeout for ${masterPlayer.name}")
+                dissolveTournament()
+                org.bukkit.Bukkit.broadcast(
+                    net.kyori.adventure.text.Component.text("§6§l[SitAndGo] §c${masterPlayer.name}のトーナメントは時間切れにより解散しました")
+                )
+            }
+        }, (waitSeconds * 20).toLong())  // TicksはSeconds * 20
+    }
     
     // ======== デバッグ用: ダミープレイヤー追加 ========
     fun addDebugBots(count: Int) {

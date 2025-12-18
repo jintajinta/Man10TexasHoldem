@@ -105,7 +105,15 @@ class SitAndGo(
         // GUIを開く
         player.openInventory(playerData.playerGUI.inv)
         
-        // 全プレイヤーに席情報を更新
+        // 新規参加者のGUIに既存プレイヤー情報を設定
+        for (existingPd in sitAndGoPlayerList) {
+            if (existingPd.player.uniqueId != player.uniqueId) {
+                playerData.playerGUI.setCoin(existingPd.seat, existingPd.player.name, firstChips)
+                playerData.playerGUI.inv.setItem(cardPosition(existingPd.seat) - 1, existingPd.getHead())
+            }
+        }
+        
+        // 全プレイヤーに新規参加者の席情報を更新
         for (pd in sitAndGoPlayerList) {
             pd.playerGUI.setCoin(seat, player.name, firstChips)
             pd.playerGUI.inv.setItem(cardPosition(seat) - 1, playerData.getHead())

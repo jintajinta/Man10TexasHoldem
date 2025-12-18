@@ -1075,8 +1075,11 @@ class SitAndGo(
                 if (pd.playerChips == 0 && !finishOrder.contains(pd.getUniqueId())) {
                     recordElimination(pd.getUniqueId())
                     
+                    // 順位を正しく計算（1人目脱落=4位、2人目=3位、3人目=2位）
+                    val rank = 5 - finishOrder.size
+                    
                     if (!pd.isBot) {
-                        pd.player.sendMessage("§c§lチップがなくなりました。${finishOrder.size}位で敗退です。")
+                        pd.player.sendMessage("§c§lチップがなくなりました。${rank}位で敗退です。")
                         
                         // 脱落プレイヤーの頭とチップ表示を削除
                         val seat = pd.seat

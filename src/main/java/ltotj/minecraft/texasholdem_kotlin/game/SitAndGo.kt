@@ -962,7 +962,15 @@ class SitAndGo(
                     bet = betAmount
                     
                     Main.plugin.logger.info("[SitAndGo Debug] Player ${currentPlayer.player.name} (seat $currentSeat) posts ${if (bbCount == 0) "SB" else "BB"}: $payAmount (bet now: $bet)")
+                    
+                    // まずプレイヤーチップ表示を更新
                     setCoin(currentSeat)
+                    
+                    // その後、SB/BBチップを表示（addedChipsを使用）
+                    for (pd in playerList) {
+                        pd.playerGUI.setChips(currentSeat, currentPlayer.addedChips, 1)
+                    }
+                    
                     currentPlayer.action = false
                     
                     // 席を記録

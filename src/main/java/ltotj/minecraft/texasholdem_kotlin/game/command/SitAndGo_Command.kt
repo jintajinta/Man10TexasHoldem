@@ -337,7 +337,7 @@ private fun handleDebug(sender: CommandSender, args: Array<out String>) {
     
     sender.sendMessage("§7ダミープレイヤー3人を追加しました")
     sender.sendMessage("§7使用方法: /sng debug [倍率] [バイイン（円）]")
-}    }
+}
     
     override fun onTabComplete(sender: CommandSender, cmd: Command, label: String, args: Array<out String>): List<String> {
         return when (args.size) {

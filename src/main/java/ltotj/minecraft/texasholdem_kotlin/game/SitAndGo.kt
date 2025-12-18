@@ -1006,8 +1006,10 @@ class SitAndGo(
                 if (anteAmount > 0) {
                     bbPlayer.playerChips -= anteAmount
                     bbPlayer.totalBetAmount += anteAmount
+                    // アンティはBBのベットとして扱う（ポット分配で考慮されるよう）
+                    bbPlayer.instBet += anteAmount
                     pot += anteAmount
-                    Main.plugin.logger.info("[SitAndGo Debug] Player ${bbPlayer.player.name} (seat $bbSeat) pays BBA: $anteAmount (after BB), pot now: $pot")
+                    Main.plugin.logger.info("[SitAndGo Debug] Player ${bbPlayer.player.name} (seat $bbSeat) pays BBA: $anteAmount (after BB), pot now: $pot, instBet now: ${bbPlayer.instBet}")
                     setCoin(bbSeat)
                     // 重要: setPot()ではなく直接GUI更新
                     // setPot()はinstBetをpotに加算してしまうため使わない

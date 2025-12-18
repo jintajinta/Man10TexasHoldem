@@ -489,6 +489,13 @@ class SitAndGo(
     fun endTournament() {
         phase = TournamentPhase.FINISHED
         
+        // 勝者（finishOrderに含まれていないプレイヤー = 1位）を追加
+        for (pd in playerList) {
+            if (!finishOrder.contains(pd.player.uniqueId)) {
+                finishOrder.add(pd.player.uniqueId)
+            }
+        }
+        
         // 順位確定
         val rankings = getFinalRankings()
         
@@ -508,6 +515,14 @@ class SitAndGo(
         
         // 結果表示（チャット）
         sendTournamentResult(rankings)
+        
+        // プレイヤー登録解除
+        for (pd in playerList) {
+            Main.currentPlayers.remove(pd.player.uniqueId)
+        }
+        
+        // テーブル削除
+        Main.sitAndGoTables.remove(masterPlayer.uniqueId)
     }
     
     fun updateRatings(rankings: List<Pair<UUID, Int>>) {

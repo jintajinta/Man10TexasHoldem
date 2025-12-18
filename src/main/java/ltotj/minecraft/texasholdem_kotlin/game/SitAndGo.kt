@@ -929,7 +929,8 @@ class SitAndGo(
             
             var bbCount = 0
             var bbDifCount = 0
-            bet = 0
+            var sbSeat = -1
+            var bbSeat = -1
             
             // SB/BBを2人から徴収（脱落席はスキップ）
             while (bbCount < 2 && bbDifCount < seatSize * 2) {  // 無限ループ防止
@@ -940,38 +941,45 @@ class SitAndGo(
                     val currentPlayer = playerList[currentSeat]
                     val betAmount = if (bbCount == 0) sb else bb
                     
-                    currentPlayer.addedChips = betAmount
-                    Main.plugin.logger.info("[SitAndGo Debug] Player ${currentPlayer.player.name} (seat $currentSeat) posting ${if (bbCount == 0) "SB" else "BB"}: $betAmount")
+                    // 直接チップを減らす（call()を使うとbet累積で問題が起きる）
+                    val payAmount = minOf(betAmount, currentPlayer.playerChips)
+                    currentPlayer.playerChips -= payAmount
+                    currentPlayer.instBet = payAmount
+                    currentPlayer.totalBetAmount += payAmount
                     
-                    if (currentPlayer.call()) {
-                        setCoin(currentSeat)
-                        currentPlayer.action = false
-                        bbCount++
+                    // betを現在のブラインドに設定（SB後はsb、BB後はbb）
+                    bet = betAmount
+                    
+                    Main.plugin.logger.info("[SitAndGo Debug] Player ${currentPlayer.player.name} (seat $currentSeat) posts ${if (bbCount == 0) "SB" else "BB"}: $payAmount")
+                    setCoin(currentSeat)
+                    currentPlayer.action = false
+                    
+                    // 席を記録
+                    if (bbCount == 0) {
+                        sbSeat = currentSeat
+                    } else {
+                        bbSeat = currentSeat
                     }
+                    
+                    bbCount++
                 }
                 
                 turnCount += 1
                 bbDifCount++
             }
             
-            // BBA (Big Blind Ante) 徴収 - BB優先、余りをアンティに
-            // BB位置 = firstSeat + bbDifCount - 1（最後に払った人）
-            if (bba > 0  && bbCount >= 2) {
-                // BBを払った席を特定（turnCountから逆算）
-                val bbSeat = ((firstSeat + bbDifCount - 1) % seatSize + seatSize) % seatSize
-                
-                if (!foldedList.contains(bbSeat)) {
-                    val bbPlayer = playerList[bbSeat]
-                    // BB支払い後の残りチップでBBAを払う
-                    val anteAmount = minOf(bba, bbPlayer.playerChips)
-                    if (anteAmount > 0) {
-                        bbPlayer.playerChips -= anteAmount
-                        bbPlayer.totalBetAmount += anteAmount
-                        pot += anteAmount
-                        Main.plugin.logger.info("[SitAndGo Debug] Player ${bbPlayer.player.name} pays BBA: $anteAmount (after BB)")
-                        setCoin(bbSeat)
-                        setPot()
-                    }
+            // BBA (Big Blind Ante) 徴収 - BBポジションのみ、BB優先・余りをアンティに
+            if (bba > 0 && bbSeat >= 0) {
+                val bbPlayer = playerList[bbSeat]
+                // BB支払い後の残りチップでBBAを払う
+                val anteAmount = minOf(bba, bbPlayer.playerChips)
+                if (anteAmount > 0) {
+                    bbPlayer.playerChips -= anteAmount
+                    bbPlayer.totalBetAmount += anteAmount
+                    pot += anteAmount
+                    Main.plugin.logger.info("[SitAndGo Debug] Player ${bbPlayer.player.name} (seat $bbSeat) pays BBA: $anteAmount (after BB)")
+                    setCoin(bbSeat)
+                    setPot()
                 }
             }
             

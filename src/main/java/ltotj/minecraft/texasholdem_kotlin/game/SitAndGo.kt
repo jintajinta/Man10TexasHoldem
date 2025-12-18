@@ -941,7 +941,10 @@ class SitAndGo(
                     val currentPlayer = playerList[currentSeat]
                     val betAmount = if (bbCount == 0) sb else bb
                     
-                    // 直接チップを減らす（call()を使うとbet累積で問題が起きる）
+                    // addedChipsを設定（表示用）してから支払い
+                    currentPlayer.addedChips = betAmount
+                    
+                    // 直接チップを減らす
                     val payAmount = minOf(betAmount, currentPlayer.playerChips)
                     currentPlayer.playerChips -= payAmount
                     currentPlayer.instBet = payAmount
@@ -950,7 +953,7 @@ class SitAndGo(
                     // betを現在のブラインドに設定（SB後はsb、BB後はbb）
                     bet = betAmount
                     
-                    Main.plugin.logger.info("[SitAndGo Debug] Player ${currentPlayer.player.name} (seat $currentSeat) posts ${if (bbCount == 0) "SB" else "BB"}: $payAmount")
+                    Main.plugin.logger.info("[SitAndGo Debug] Player ${currentPlayer.player.name} (seat $currentSeat) posts ${if (bbCount == 0) "SB" else "BB"}: $payAmount (bet now: $bet)")
                     setCoin(currentSeat)
                     currentPlayer.action = false
                     
@@ -969,10 +972,12 @@ class SitAndGo(
             }
             
             // BBA (Big Blind Ante) 徴収 - BBポジションのみ、BB優先・余りをアンティに
+            Main.plugin.logger.info("[SitAndGo Debug] BBA check: bba=$bba, bbSeat=$bbSeat, sb=$sb, bb=$bb")
             if (bba > 0 && bbSeat >= 0) {
                 val bbPlayer = playerList[bbSeat]
                 // BB支払い後の残りチップでBBAを払う
                 val anteAmount = minOf(bba, bbPlayer.playerChips)
+                Main.plugin.logger.info("[SitAndGo Debug] BBA calculation: bba=$bba, bbPlayer.chips=${bbPlayer.playerChips}, anteAmount=$anteAmount")
                 if (anteAmount > 0) {
                     bbPlayer.playerChips -= anteAmount
                     bbPlayer.totalBetAmount += anteAmount

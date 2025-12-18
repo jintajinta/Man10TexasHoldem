@@ -654,9 +654,18 @@ class SitAndGo(
 }
     
     fun sendTournamentResult(rankings: List<Pair<UUID, Int>>) {
+        // レート変動があるかチェック
+        val hasRatingChange = buyIn >= con.getInt("sitandgo.ratingMinBuyIn")
+        
         val rankData = rankings.sortedBy { it.second }.map { (uuid, rank) ->
             val pd = playerList.find { it.player.uniqueId == uuid }
-            Triple(rank, pd?.player?.name ?: "Unknown", calculatePrize(rank))
+            val sitAndGoPd = pd as? SitAndGoPlayerData
+            val ratingBefore = sitAndGoPd?.ratingBefore ?: 0
+            val ratingAfter = sitAndGoPd?.ratingAfter ?: 0
+            val ratingChange = ratingAfter - ratingBefore
+            val ratingChangeStr = if (ratingChange >= 0) "§a+$ratingChange" else "§c$ratingChange"
+            val ratingInfo = if (hasRatingChange) " §7[$ratingBefore→$ratingAfter $ratingChangeStr§7]" else ""
+            Triple(pd?.player?.name ?: "Unknown", calculatePrize(rank), ratingInfo)
         }
         
         val messages = mutableListOf(
@@ -665,10 +674,10 @@ class SitAndGo(
             ""
         )
         
-        if (rankData.isNotEmpty()) messages.add("§6§l🏆 1位: ${rankData[0].second} §e+${rankData[0].third}")
-        if (rankData.size > 1) messages.add("§f§l🥈 2位: ${rankData[1].second} §e+${rankData[1].third}")
-        if (rankData.size > 2) messages.add("§7§l🥉 3位: ${rankData[2].second} §e+${rankData[2].third}")
-        if (rankData.size > 3) messages.add("§8   4位: ${rankData[3].second}")
+        if (rankData.isNotEmpty()) messages.add("§6§l🏆 1位: ${rankData[0].first} §e+${rankData[0].second}${rankData[0].third}")
+        if (rankData.size > 1) messages.add("§f§l🥈 2位: ${rankData[1].first} §e+${rankData[1].second}${rankData[1].third}")
+        if (rankData.size > 2) messages.add("§7§l🥉 3位: ${rankData[2].first} §e+${rankData[2].second}${rankData[2].third}")
+        if (rankData.size > 3) messages.add("§8   4位: ${rankData[3].first}${rankData[3].third}")
             
         messages.add("§4§l==========================================")
         

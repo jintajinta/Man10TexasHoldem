@@ -1010,20 +1010,21 @@ class SitAndGo(
                     bbPlayer.totalBetAmount += anteAmount
                     // アンティはBBのベットとして扱う（ポット分配で考慮されるよう）
                     bbPlayer.instBet += anteAmount
-                    pot += anteAmount
-                    Main.plugin.logger.info("[SitAndGo Debug] Player ${bbPlayer.player.name} (seat $bbSeat) pays BBA: $anteAmount (after BB), pot now: $pot, instBet now: ${bbPlayer.instBet}")
+                    // 注意: pot += anteAmountはしない！setPot()でinstBetから加算されるため二重加算になる
+                    Main.plugin.logger.info("[SitAndGo Debug] Player ${bbPlayer.player.name} (seat $bbSeat) pays BBA: $anteAmount (after BB), instBet now: ${bbPlayer.instBet}")
                     setCoin(bbSeat)
-                    // 重要: setPot()ではなく直接GUI更新
-                    // setPot()はinstBetをpotに加算してしまうため使わない
-                    for (pd in playerList) {
-                        pd.playerGUI.setPot(pot)
-                    }
                 }
+            }
+            
+            // プリフロップ開始時のPot表示（アンティのみ = BBのinstBet - bb）
+            // SB/BBはinstBetに入っているが、表示はアンティ部分のみにする
+            val anteOnlyPot = if (bba > 0 && bbSeat >= 0) {
+                minOf(bba, playerList[bbSeat].instBet)  // 実際に払われたアンティ額
             } else {
-                // BBAがない場合（レベル1など）でもpot表示を更新
-                for (pd in playerList) {
-                    pd.playerGUI.setPot(pot)  // pot = 0
-                }
+                0
+            }
+            for (pd in playerList) {
+                pd.playerGUI.setPot(anteOnlyPot)
             }
             
             // ミニマムレイズの差分を設定（正しいポーカールール）

@@ -1007,9 +1007,18 @@ class SitAndGo(
                     bbPlayer.playerChips -= anteAmount
                     bbPlayer.totalBetAmount += anteAmount
                     pot += anteAmount
-                    Main.plugin.logger.info("[SitAndGo Debug] Player ${bbPlayer.player.name} (seat $bbSeat) pays BBA: $anteAmount (after BB)")
+                    Main.plugin.logger.info("[SitAndGo Debug] Player ${bbPlayer.player.name} (seat $bbSeat) pays BBA: $anteAmount (after BB), pot now: $pot")
                     setCoin(bbSeat)
-                    setPot()
+                    // 重要: setPot()ではなく直接GUI更新
+                    // setPot()はinstBetをpotに加算してしまうため使わない
+                    for (pd in playerList) {
+                        pd.playerGUI.setPot(pot)
+                    }
+                }
+            } else {
+                // BBAがない場合（レベル1など）でもpot表示を更新
+                for (pd in playerList) {
+                    pd.playerGUI.setPot(pot)  // pot = 0
                 }
             }
             

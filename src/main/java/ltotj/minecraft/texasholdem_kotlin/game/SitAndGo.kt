@@ -203,8 +203,9 @@ class SitAndGo(
             val playerData = SitAndGoPlayerData(botPlayer, seat)
             playerData.isBot = true
             playerData.botName = "Bot$i"
-            // Bot用にユニークなUUIDを生成（結果表示・レート計算用）
-            playerData.botUuid = java.util.UUID.randomUUID()
+            // Bot用にユニークかつ固定のUUIDを生成（結果表示・レート計算用）
+            // ランダムだとレートが毎回リセットされるため、固定UUIDを使用
+            playerData.botUuid = java.util.UUID.fromString("00000000-0000-0000-0000-00000000000$i")
             
             // デフォルトレート
             playerData.ratingBefore = 2500
@@ -970,6 +971,10 @@ class SitAndGo(
                     for (pd in playerList) {
                         pd.playerGUI.setChips(currentSeat, currentPlayer.addedChips, 1)
                     }
+                    
+                    // addedChipsを表示だけに使用し、実際のベットロジックには影響させないようリセット
+                    // これをしないと、コール時にaddedChips分が加算されてレイズになってしまう
+                    currentPlayer.addedChips = 0
                     
                     currentPlayer.action = false
                     

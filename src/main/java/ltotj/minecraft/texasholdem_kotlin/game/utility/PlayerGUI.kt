@@ -94,15 +94,15 @@ class PlayerGUI(private val seat: Int,name: String){
     }
 
     fun setChips(seat: Int, amount: Int, rate: Int){
-        setGUIItem(chipPosition(seat), Material.GOLD_NUGGET, amount, "§l§yチップ", listOf("§e計${amount}枚","§e一枚§e" + rate + "円"))
+        setGUIItem(chipPosition(seat), Material.GOLD_NUGGET, if (amount > 127) 127 else if (amount <= 0) 1 else amount, "§l§yチップ", listOf("§e計${amount}枚"))
     }
 
     fun setCoin(seat: Int, name: String, amount: Int){
-        setGUIItem(cardPosition(seat) + 2, Material.GOLD_INGOT, "§c§l$name§r§wのチップ", listOf("§e$amount§w枚"))
+        setGUIItem(cardPosition(seat) + 2, Material.GOLD_INGOT, if (amount > 127) 127 else if (amount <= 0) 1 else amount, "§c§l$name§r§wのチップ", listOf("§e$amount§w枚"))
     }
 
     fun setPot(pot: Int){
-        setGUIItem(25, Material.GOLD_BLOCK, "§6現在の賭けチップ合計", listOf("§e§l$pot§w枚"))
+        setGUIItem(25, Material.GOLD_BLOCK, if(pot > 127) 127 else if (pot <= 0) 1 else pot, "§6現在の賭けチップ合計", listOf("§e§l$pot§w枚"))
     }
 
     fun setWinner(evenOrOdd:Boolean,head:ItemStack){

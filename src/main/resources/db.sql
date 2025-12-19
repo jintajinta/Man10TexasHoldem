@@ -44,3 +44,63 @@ create table playerData
 );
 
 create index playerData_uuid_index on playerData(uuid);
+
+-- Sit & Go レーティングテーブル
+create table sitandgo_rating
+(
+    id int unsigned auto_increment,
+    uuid varchar(36) unique not null,
+    name varchar(16) null,
+    rating int default 1500,
+    games_played int default 0,
+    first_place int default 0,
+    second_place int default 0,
+    third_place int default 0,
+    fourth_place int default 0,
+    total_prize bigint default 0,
+    last_played datetime null,
+    
+    primary key(id)
+);
+
+create index sitandgo_rating_uuid_index on sitandgo_rating(uuid);
+create index sitandgo_rating_rating_index on sitandgo_rating(rating);
+
+-- Sit & Go ログテーブル
+create table sitandgo_log
+(
+    id int unsigned auto_increment,
+    tournament_time datetime not null,
+    buy_in bigint not null,
+    multiplier double not null,
+    total_pool bigint not null,
+    
+    -- プレイヤー情報（順位順）
+    p1_uuid varchar(36) not null,
+    p1_name varchar(16) not null,
+    p1_prize bigint default 0,
+    p1_rating_before int default 0,
+    p1_rating_after int default 0,
+    
+    p2_uuid varchar(36) not null,
+    p2_name varchar(16) not null,
+    p2_prize bigint default 0,
+    p2_rating_before int default 0,
+    p2_rating_after int default 0,
+    
+    p3_uuid varchar(36) not null,
+    p3_name varchar(16) not null,
+    p3_prize bigint default 0,
+    p3_rating_before int default 0,
+    p3_rating_after int default 0,
+    
+    p4_uuid varchar(36) not null,
+    p4_name varchar(16) not null,
+    p4_prize bigint default 0,
+    p4_rating_before int default 0,
+    p4_rating_after int default 0,
+    
+    primary key(id)
+);
+
+create index sitandgo_log_time_index on sitandgo_log(tournament_time);

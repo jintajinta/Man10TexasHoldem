@@ -116,7 +116,7 @@ open class TexasHoldem:Thread{
         var preCall= AtomicBoolean()
         var totalBetAmount=0 //allIn時の配分計算用
 
-        fun getHead():ItemStack{
+        open fun getHead():ItemStack{
             val item = ItemStack(Material.PLAYER_HEAD)
             val skull = (item.itemMeta as SkullMeta)
             skull.owningPlayer = player
@@ -575,7 +575,7 @@ open class TexasHoldem:Thread{
         }
     }
 
-    private fun setItemAlPl(slot: Int, item: ItemStack){
+    protected fun setItemAlPl(slot: Int, item: ItemStack){
         for(playerData in playerList)playerData.playerGUI.inv.setItem(slot, item)
     }
 

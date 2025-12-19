@@ -7,6 +7,10 @@ depend:
 commands:
   poker:
     usage: "/poker help で使い方を確認しましょう"
+  sng:
+    description: Sit and Go tournament commands
+    usage: "/sng <start|join|leave|rating|top|help>"
+    aliases: [sitandgo]
 
 permissions:
   poker.admin:

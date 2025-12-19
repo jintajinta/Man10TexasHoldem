@@ -26,6 +26,14 @@ dependencies {
         exclude group: 'org.bukkit', module: 'bukkit'
     }
     implementation 'org.jetbrains.kotlin:kotlin-stdlib:1.9.22'
+    
+    // テスト用
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
 }
 
 configurations {

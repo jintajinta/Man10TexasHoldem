@@ -1,5 +1,6 @@
 package ltotj.minecraft.texasholdem_kotlin
 
+import org.bukkit.configuration.ConfigurationSection
 import org.bukkit.configuration.file.FileConfiguration
 import org.bukkit.plugin.Plugin
 
@@ -38,6 +39,33 @@ class Config(private val plugin: Plugin) {
         } catch (exception: Exception) {
             println("コンフィグから" + string + "の値を取るのに失敗しました")
             0.0
+        }
+    }
+
+    fun getBoolean(string: String): Boolean {
+        return try {
+            config!!.getBoolean(string)
+        } catch (exception: Exception) {
+            println("コンフィグから" + string + "の値を取るのに失敗しました")
+            false
+        }
+    }
+
+    fun getConfigurationSection(path: String): ConfigurationSection? {
+        return try {
+            config!!.getConfigurationSection(path)
+        } catch (exception: Exception) {
+            println("コンフィグから" + path + "のセクションを取るのに失敗しました")
+            null
+        }
+    }
+
+    fun getList(path: String): List<*>? {
+        return try {
+            config!!.getList(path)
+        } catch (exception: Exception) {
+            println("コンフィグから" + path + "のリストを取るのに失敗しました")
+            null
         }
     }
 
